@@ -1,0 +1,2 @@
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Debug\Нейронная сеть.exe
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Debug\Нейронная сеть.pdb
