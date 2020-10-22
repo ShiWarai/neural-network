@@ -1,0 +1,14 @@
+﻿  Нейронная сеть.cpp
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(61,19): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(70,21): error C3861: read_u16: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(71,21): error C3861: read_u32: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(72,26): error C3861: read_u16: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(73,26): error C3861: read_u16: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(74,24): error C3861: read_u32: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(79,24): error C3861: read_u32: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(82,26): error C3861: read_u16: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(83,28): error C3861: read_u16: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(84,31): error C3861: read_u32: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(85,29): error C3861: read_u32: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(88,27): error C3861: read_u32: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(89,32): error C3861: read_u32: идентификатор не найден
