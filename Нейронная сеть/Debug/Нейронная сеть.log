@@ -1,11 +1,18 @@
 ﻿  Нейронная сеть.cpp
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(96,89): warning C4244: =: преобразование "int" в "float", возможна потеря данных
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(145,15): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(182,19): warning C4018: <: несоответствие типов со знаком и без знака
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(213,41): warning C4244: =: преобразование "double" в "int", возможна потеря данных
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(239,39): warning C4018: <: несоответствие типов со знаком и без знака
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(251,75): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(252,53): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(56,25): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(58,29): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(66,25): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(67,29): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(68,31): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(134,23): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(135,27): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(187,41): warning C4244: =: преобразование "double" в "int", возможна потеря данных
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(209,15): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(246,19): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(276,23): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(285,39): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(295,68): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(299,53): warning C4244: аргумент: преобразование "double" в "int", возможна потеря данных
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\xstring(2390,23): warning C4244: аргумент: преобразование "wchar_t" в "const _Elem", возможна потеря данных
           with
           [
@@ -31,14 +38,14 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.2
           [
               _Iter=wchar_t *
           ]
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(163): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(227): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
           with
           [
               _Elem=wchar_t,
               _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
               _Alloc=std::allocator<char>
           ]
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(163): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(227): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
           with
           [
               _Elem=wchar_t,
