@@ -24,18 +24,19 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.2
           [
               _Iter=wchar_t *
           ]
-D:\Projects\Neural_Network\neural-network\Нейронная сеть\Нейронная сеть.cpp(66): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
+D:\Projects\Neural_Network\neural-network\Нейронная сеть\Нейронная сеть.cpp(119): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
           with
           [
               _Elem=wchar_t,
               _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
               _Alloc=std::allocator<char>
           ]
-D:\Projects\Neural_Network\neural-network\Нейронная сеть\Нейронная сеть.cpp(66): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
+D:\Projects\Neural_Network\neural-network\Нейронная сеть\Нейронная сеть.cpp(119): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
           with
           [
               _Elem=wchar_t,
               _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
               _Alloc=std::allocator<char>
           ]
+  LINK : не найден или не выполнена сборка D:\Projects\Neural_Network\neural-network\Нейронная сеть\x64\Debug\Нейронная сеть.exe при последней инкрементной компоновке; выполняется полная компоновка
   Нейронная сеть.vcxproj -> D:\Projects\Neural_Network\neural-network\Нейронная сеть\x64\Debug\Нейронная сеть.exe

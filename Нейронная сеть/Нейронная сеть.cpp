@@ -3,6 +3,7 @@
 #include <string>
 #include <Windows.h>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
 
@@ -143,7 +144,7 @@ int main()
 
     for (int y = 0; y < 16; y++) {
         for (int x = 0; x < 16; x++)
-            cout << image[x][y] << " ";
+            cout << setw(4) << image[x][y] << " ";
         cout << endl;
     }
 	
