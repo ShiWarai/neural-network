@@ -3,6 +3,7 @@
 #include <string>
 #include <Windows.h>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
 
@@ -126,8 +127,7 @@ int main()
     // выводим результат
     for (int i = 0; i < bmiHeader.biWidth; i++) {
         for (int j = 0; j < bmiHeader.biHeight; j++) {
-            printf("%d %d %d\n", rgb[i][j].rgbRed, rgb[i][j].rgbGreen, rgb[i][j].rgbBlue);
-            
+            cout << setw(4) << "%d %d %d\n", rgb[i][j].rgbRed, rgb[i][j].rgbGreen, rgb[i][j].rgbBlue;
         }
         printf("\n");
         cout << "end line" << endl;
