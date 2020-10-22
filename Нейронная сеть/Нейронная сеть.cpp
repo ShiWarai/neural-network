@@ -4,6 +4,10 @@
 #include <Windows.h>
 #include <vector>
 #include <iomanip>
+#include <cmath>
+#include <random>
+#include <time.h>
+
 
 using namespace std;
 
@@ -99,6 +103,8 @@ void getPicture(int **picture, string pictureName) {
 
 int main()
 {
+    const unsigned int PICTURE_SIZE = 16;
+    srand(time(NULL));
 
 	setlocale(LC_ALL, "");
 	
@@ -135,17 +141,56 @@ int main()
 	for(int i = 0; i < trainingFiles.size(); i++)
 		cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
 
-    int** image = new int* [16];
+    /*
+    for (int k = 0; k < trainingFiles.size(); k++) {
 
-    for (int i = 0; i < 16; i++)
-        image[i] = new int[16]();
+        int** image = new int* [PICTURE_SIZE];
 
-    getPicture(image, PATH_S + trainingFiles[0][0]);
+        for (int i = 0; i < PICTURE_SIZE; i++)
+            image[i] = new int[PICTURE_SIZE]();
 
-    for (int y = 0; y < 16; y++) {
-        for (int x = 0; x < 16; x++)
-            cout << setw(4) << image[x][y] << " ";
+        getPicture(image, PATH_S + trainingFiles[k][0]);
+
+        // Тестовый вывод
+        for (int y = 0; y < PICTURE_SIZE; y++) {
+            for (int x = 0; x < PICTURE_SIZE; x++)
+                cout << setw(4) << image[x][y] << " ";
+            cout << endl;
+        }
+
         cout << endl;
+    }
+
+    */
+
+    // Создание весов
+    vector<float **> scales;
+    int currentLayerSize;
+
+    // Добавить функцию
+    for (int i = 0; i < log2(PICTURE_SIZE); i++) {
+        currentLayerSize = PICTURE_SIZE / pow(2, i);
+
+        float** layer = new float* [currentLayerSize];
+        for (int k = 0; k < currentLayerSize; k++)
+            layer[k] = new float[currentLayerSize]();
+
+        for (int x = 0; x < currentLayerSize; x++) {
+            for (int y = 0; y < currentLayerSize; y++) {
+                layer[x][y] = floor( (float(rand()) / RAND_MAX)*100 ) / 100;
+            }
+        }
+
+        scales.push_back(layer);
+    }
+
+    for (int k = 0; k < scales.size(); k++)
+        cout << scales[k][0][0] << endl;
+
+    const int epochs = 10;
+
+    for (int epoch = 1; epoch <= epochs; epoch++) {
+
     }
 	
 	return 0;
