@@ -43,47 +43,9 @@ static int read_s32(FILE* fp)
     return ((int)(((((b3 << 8) | b2) << 8) | b1) << 8) | b0);
 }
 
+void getPicture(int **picture, string pictureName) {
 
-int main()
-{
-
-	setlocale(LC_ALL, "");
-	
-	const wstring PATH = L"C:/Digits/";
-    const string PATH_S = "C:/Digits/";
-	
-	vector<vector<string>> trainingFiles;
-
-	WIN32_FIND_DATA FindFileData;
-	HANDLE handleFiles = FindFirstFileW((PATH + L"*").c_str(), &FindFileData);
-
-	if (handleFiles != INVALID_HANDLE_VALUE)
-	{
-		while (true) {			
-			if (FindNextFileW(handleFiles, &FindFileData) != NULL)
-			{
-				wstring ws(FindFileData.cFileName);
-				string fileName(ws.begin(), ws.end());
-				string digit = fileName.substr(0, fileName.find("."));
-				
-				trainingFiles.push_back(vector<string> {fileName, digit});
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
-
-	trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
-	FindClose(handleFiles);
-
-	// Вывод названий и цифр
-	for(int i = 0; i < trainingFiles.size(); i++)
-		cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
-
-
-    FILE* pFile = fopen((PATH_S + trainingFiles[0][0]).c_str(), "rb");
+    FILE* pFile = fopen(pictureName.c_str(), "rb");
 
     // считываем заголовок файла
     BITMAPFILEHEADER header;
@@ -125,15 +87,65 @@ int main()
 
     // выводим результат
     for (int i = 0; i < bmiHeader.biWidth; i++) {
-        for (int j = 0; j < bmiHeader.biHeight; j++) {
-            printf("%d %d %d\n", rgb[i][j].rgbRed, rgb[i][j].rgbGreen, rgb[i][j].rgbBlue);
-            
-        }
-        printf("\n");
-        cout << "end line" << endl;
+        for (int j = 0; j < bmiHeader.biHeight; j++)
+            picture[i][j] = (rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 3;
     }
-
     fclose(pFile);
+
+    return;
+}
+
+
+int main()
+{
+
+	setlocale(LC_ALL, "");
+	
+	const wstring PATH = L"C:/Digits/";
+    const string PATH_S = "C:/Digits/";
+	
+	vector<vector<string>> trainingFiles;
+
+	WIN32_FIND_DATA FindFileData;
+	HANDLE handleFiles = FindFirstFileW((PATH + L"*").c_str(), &FindFileData);
+
+	if (handleFiles != INVALID_HANDLE_VALUE)
+	{
+		while (true) {			
+			if (FindNextFileW(handleFiles, &FindFileData) != NULL)
+			{
+				wstring ws(FindFileData.cFileName);
+				string fileName(ws.begin(), ws.end());
+				string digit = fileName.substr(0, fileName.find("."));
+				
+				trainingFiles.push_back(vector<string> {fileName, digit});
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
+	FindClose(handleFiles);
+
+	// Вывод названий и цифр
+	for(int i = 0; i < trainingFiles.size(); i++)
+		cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
+
+    int** image = new int* [16];
+
+    for (int i = 0; i < 16; i++)
+        image[i] = new int[16]();
+
+    getPicture(image, PATH_S + trainingFiles[0][0]);
+
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++)
+            cout << image[x][y] << " ";
+        cout << endl;
+    }
 	
 	return 0;
 }

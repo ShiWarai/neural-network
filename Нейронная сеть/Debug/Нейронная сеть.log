@@ -1,14 +1,42 @@
 ﻿  Нейронная сеть.cpp
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(61,19): warning C4018: <: несоответствие типов со знаком и без знака
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(70,21): error C3861: read_u16: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(71,21): error C3861: read_u32: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(72,26): error C3861: read_u16: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(73,26): error C3861: read_u16: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(74,24): error C3861: read_u32: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(79,24): error C3861: read_u32: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(82,26): error C3861: read_u16: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(83,28): error C3861: read_u16: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(84,31): error C3861: read_u32: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(85,29): error C3861: read_u32: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(88,27): error C3861: read_u32: идентификатор не найден
-C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(89,32): error C3861: read_u32: идентификатор не найден
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(134,19): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\xstring(2390,23): warning C4244: аргумент: преобразование "wchar_t" в "const _Elem", возможна потеря данных
+          with
+          [
+              _Elem=char
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\xstring(2401): message : выполняется компиляция ссылки на экземпляр шаблон функции "void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(_Iter,const _Iter,std::input_iterator_tag)"
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\xstring(2401): message : выполняется компиляция ссылки на экземпляр шаблон функции "void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(_Iter,const _Iter,std::input_iterator_tag)"
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\xstring(2381): message : выполняется компиляция ссылки на экземпляр шаблон функции "void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(const _Iter,const _Iter,std::forward_iterator_tag)"
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\xstring(2381): message : выполняется компиляция ссылки на экземпляр шаблон функции "void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(const _Iter,const _Iter,std::forward_iterator_tag)"
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(118): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
+          with
+          [
+              _Elem=wchar_t,
+              _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
+              _Alloc=std::allocator<char>
+          ]
+C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Нейронная сеть.cpp(118): message : выполняется компиляция ссылки на экземпляр шаблон функции "std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)"
+          with
+          [
+              _Elem=wchar_t,
+              _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
+              _Alloc=std::allocator<char>
+          ]
+  Нейронная сеть.vcxproj -> C:\Users\bager\source\repos\ShiWarai\neural-network\Нейронная сеть\Debug\Нейронная сеть.exe
