@@ -1,2 +1,0 @@
-D:\Projects\Neural_Network\neural-network\Нейронная сеть\x64\Debug\Нейронная сеть.exe
-D:\Projects\Neural_Network\neural-network\Нейронная сеть\x64\Debug\Нейронная сеть.pdb
