@@ -130,12 +130,14 @@ void getPicture(double **picture, string pictureName) {
     return;
 }
 
-void reluFunction(vector<vector<double>> a) {
-    for (int x = 0; x < a.size(); x++) {
-        for (int y = 0; y < a[x].size(); y++) {
-            a[x][y] = max(a[x][y], 0);
+void reluFunction(double **a, int x, int y) {
+    for (int x1 = 0; x1 < x; x1++) {
+        for (int y1 = 0; y1 < y; y1++) {
+            a[x1][y1] = max(a[x1][y1], 0);
         }
     }
+
+    return;
 }
 
 void directDistributionFunc(double **pic, vector<vector<float>> w, int size) {
@@ -179,6 +181,18 @@ void convolutionFunc(double** pic, int currentSize) {
     return;
 }
 
+void softmax(double** a, int x) {
+    double sum = 0;
+
+    for (int i = 0; i < x; i++)
+        sum += a[i][0];
+
+    for (int i = 0; i < x; i++)
+        a[i][0] /= sum;
+
+    return;
+}
+
 vector<vector<vector<float>>> generationWeights(vector<vector<vector<float>>> weights, unsigned PICTURE_SIZE) {
     int currentLayerSize;
 
@@ -192,7 +206,7 @@ vector<vector<vector<float>>> generationWeights(vector<vector<vector<float>>> we
 
         for (int x = 0; x < currentLayerSize; x++) {
             for (int y = 0; y < currentLayerSize; y++) {
-                layer[x].push_back((float)rand() / RAND_MAX);
+                layer[x].push_back((float) rand() / RAND_MAX);
             }
         }
 
@@ -246,13 +260,12 @@ int main()
 	for(int i = 0; i < trainingFiles.size(); i++)
 		cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
 
-    /*
     for (int k = 0; k < trainingFiles.size(); k++) {
 
-        int** image = new int* [PICTURE_SIZE];
+        double** image = new double* [PICTURE_SIZE];
 
         for (int i = 0; i < PICTURE_SIZE; i++)
-            image[i] = new int[PICTURE_SIZE]();
+            image[i] = new double[PICTURE_SIZE]();
 
         getPicture(image, PATH_S + trainingFiles[k][0]);
 
@@ -266,7 +279,7 @@ int main()
         cout << endl;
     }
 
-    */
+
 
     // Создание весов
     vector<vector<vector<float>>> weights;
@@ -299,7 +312,7 @@ int main()
                     cout << endl;
                 }
 
-                prediction = activationFunc(image[0][0]) * 10 - 1;
+                prediction = activationFunc(image[0][0]) * 10;
                 delta.push_back(abs((double)stoi(trainingFiles[fileNum][1]) - prediction));
 
                 cout << "Prediction:" << prediction << endl;
