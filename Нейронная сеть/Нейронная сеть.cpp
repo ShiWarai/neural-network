@@ -7,47 +7,11 @@
 #include <cmath>
 #include <random>
 #include <time.h>
+#include "BMP_reading.h"
 
 
 using namespace std;
-
-
-
-static unsigned short read_u16(FILE* fp)
-{
-    unsigned char b0, b1;
-
-    b0 = getc(fp);
-    b1 = getc(fp);
-
-    return ((b1 << 8) | b0);
-}
-
-
-static unsigned int read_u32(FILE* fp)
-{
-    unsigned char b0, b1, b2, b3;
-
-    b0 = getc(fp);
-    b1 = getc(fp);
-    b2 = getc(fp);
-    b3 = getc(fp);
-
-    return ((((((b3 << 8) | b2) << 8) | b1) << 8) | b0);
-}
-
-
-static int read_s32(FILE* fp)
-{
-    unsigned char b0, b1, b2, b3;
-
-    b0 = getc(fp);
-    b1 = getc(fp);
-    b2 = getc(fp);
-    b3 = getc(fp);
-
-    return ((int)(((((b3 << 8) | b2) << 8) | b1) << 8) | b0);
-}
+using namespace BMP;
 
 // a x b = c
 vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
@@ -74,61 +38,6 @@ vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
     return c;
 }
 
-double activationFunc(double x) {
-    return 1 / (1 + exp(-x));
-}
-
-void getPicture(double **picture, string pictureName) {
-
-    FILE* pFile = fopen(pictureName.c_str(), "rb");
-
-    // считываем заголовок файла
-    BITMAPFILEHEADER header;
-
-    header.bfType = read_u16(pFile);
-    header.bfSize = read_u32(pFile);
-    header.bfReserved1 = read_u16(pFile);
-    header.bfReserved2 = read_u16(pFile);
-    header.bfOffBits = read_u32(pFile);
-
-    // считываем заголовок изображения
-    BITMAPINFOHEADER bmiHeader;
-
-    bmiHeader.biSize = read_u32(pFile);
-    bmiHeader.biWidth = read_s32(pFile);
-    bmiHeader.biHeight = read_s32(pFile);
-    bmiHeader.biPlanes = read_u16(pFile);
-    bmiHeader.biBitCount = read_u16(pFile);
-    bmiHeader.biCompression = read_u32(pFile);
-    bmiHeader.biSizeImage = read_u32(pFile);
-    bmiHeader.biXPelsPerMeter = read_s32(pFile);
-    bmiHeader.biYPelsPerMeter = read_s32(pFile);
-    bmiHeader.biClrUsed = read_u32(pFile);
-    bmiHeader.biClrImportant = read_u32(pFile);
-
-
-    RGBQUAD** rgb = new RGBQUAD * [bmiHeader.biWidth];
-    for (int i = 0; i < bmiHeader.biWidth; i++) {
-        rgb[i] = new RGBQUAD[bmiHeader.biHeight];
-    }
-
-    for (int i = 0; i < bmiHeader.biWidth; i++) {
-        for (int j = 0; j < bmiHeader.biHeight; j++) {
-            rgb[i][j].rgbBlue = getc(pFile);
-            rgb[i][j].rgbGreen = getc(pFile);
-            rgb[i][j].rgbRed = getc(pFile);
-        }
-    }
-
-    // выводим результат
-    for (int i = 0; i < bmiHeader.biWidth; i++) {
-        for (int j = 0; j < bmiHeader.biHeight; j++)
-            picture[i][j] = activationFunc((rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 3);
-    }
-    fclose(pFile);
-
-    return;
-}
 
 void reluFunction(double **a, int x, int y) {
     for (int x1 = 0; x1 < x; x1++) {
@@ -256,23 +165,19 @@ int main()
     cout << endl;
     cout << endl;
 
+
 	// Вывод названий и цифр
 	for(int i = 0; i < trainingFiles.size(); i++)
 		cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
 
     for (int k = 0; k < trainingFiles.size(); k++) {
 
-        double** image = new double* [PICTURE_SIZE];
-
-        for (int i = 0; i < PICTURE_SIZE; i++)
-            image[i] = new double[PICTURE_SIZE]();
-
-        getPicture(image, PATH_S + trainingFiles[k][0]);
+        BMP_BW image(trainingFiles[k][1], (string)(PATH_S + trainingFiles[k][0]), false);
 
         // Тестовый вывод
-        for (int y = 0; y < PICTURE_SIZE; y++) {
+        for (int y = PICTURE_SIZE - 1; y >= 0; y--) {
             for (int x = 0; x < PICTURE_SIZE; x++)
-                cout << setw(4) << image[x][y] << " ";
+                cout << setw(3) << setprecision(3)<< image[y][x] << " ";
             cout << endl;
         }
 
@@ -290,44 +195,12 @@ int main()
     vector<double> delta;
     double prediction;
 
+    // Итерации обучения (прямой и обратный ход)
     for (int epoch = 1; epoch <= epochs; epoch++) {
         for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) {
             cout << "(" << epoch << ", " << trainingFiles[fileNum][1] << ") :" << endl;
-
-
-            double** image = new double* [PICTURE_SIZE];
-            for (int i = 0; i < PICTURE_SIZE; i++)
-                image[i] = new double[PICTURE_SIZE]();
-
-            getPicture(image, PATH_S + trainingFiles[fileNum][0]);
             
-            int iter = 1;
-
-            auto lastWeights = generationWeights(weights, PICTURE_SIZE);
-            while (true) {
-                // Итерации обработки изображения
-                for (int i = 0; i < log2(PICTURE_SIZE); i++) {
-                    directDistributionFunc(image, weights[i], PICTURE_SIZE / pow(2, i)); // Меняем матрицу, используя веса
-                    convolutionFunc(image, PICTURE_SIZE / pow(2, i));
-                    cout << endl;
-                }
-
-                prediction = activationFunc(image[0][0]) * 10;
-                delta.push_back(abs((double)stoi(trainingFiles[fileNum][1]) - prediction));
-
-                cout << "Prediction:" << prediction << endl;
-                cout << "Delta: " << abs((double)stoi(trainingFiles[fileNum][1]) - prediction) << endl;
-
-                if (iter > 2) {
-
-                }
-            }
-
-            // Отчищаем дин. массив изображения
-            for (int i = 0; i < PICTURE_SIZE; i++)
-                delete []image[i];
-
-            delete []image;
+            
             delta.clear();
         }
     }

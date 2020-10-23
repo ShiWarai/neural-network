@@ -142,7 +142,7 @@
     <ClCompile Include="Нейронная сеть.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BMP_headers.h" />
+    <ClInclude Include="BMP_reading.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
