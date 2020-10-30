@@ -44,7 +44,7 @@ namespace BMP {
     {
         unsigned char b0, b1;
 
-        b0 = getc(fp);
+        b0 = getc(fp);  
         b1 = getc(fp);
 
         return ((b1 << 8) | b0);
@@ -107,11 +107,13 @@ namespace BMP {
         bmiHeader.biClrImportant = read_u32(pFile);
 
 
+        // Создание пустого массива
         RGBQUAD** rgb = new RGBQUAD * [bmiHeader.biWidth];
         for (int i = 0; i < bmiHeader.biWidth; i++) {
             rgb[i] = new RGBQUAD[bmiHeader.biHeight];
         }
 
+        // Чтение цветов (BGR)
         for (int i = 0; i < bmiHeader.biWidth; i++) {
             for (int j = 0; j < bmiHeader.biHeight; j++) {
                 rgb[i][j].rgbBlue = getc(pFile);
@@ -120,7 +122,7 @@ namespace BMP {
             }
         }
 
-        // выводим результат
+        // Выводим результат
         for (int i = 0; i < bmiHeader.biWidth; i++) {
             picture.push_back(std::vector<double>());
             for (int j = 0; j < bmiHeader.biHeight; j++) {

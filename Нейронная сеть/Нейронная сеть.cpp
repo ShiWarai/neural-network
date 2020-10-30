@@ -13,25 +13,14 @@
 using namespace std;
 using namespace BMP;
 
-// a x b = c
-vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
+// Создание нулевой матрицы Y x X
+vector<vector<double>> createFilledVector(int y, int x) {
     vector<vector<double>> c;
 
-    for (int y1 = 0; y1 < a.size(); y1++) {
+    for (int y1 = 0; y1 < y; y1++) {
         c.push_back(vector<double> {});
-        for (int x1 = 0; x1 < b[0].size(); x1++) {
+        for (int x1 = 0; x1 < x; x1++) {
             c[y1].push_back(0);
-        }
-    }
-    
-    if (a[0].size() != b.size())
-        return c;
-
-    for (int y1 = 0; y1 < a.size(); y1++) {
-        for (int x1 = 0; x1 < b[0].size(); x1++) {
-            for (int x = 0; x < a[0].size(); x++) {
-                c[y1][x1] += a[y1][x] * b[x][x1];
-            }
         }
     }
 
@@ -39,16 +28,39 @@ vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
 }
 
 
-void reluFunction(double **a, int x, int y) {
-    for (int x1 = 0; x1 < x; x1++) {
-        for (int y1 = 0; y1 < y; y1++) {
-            a[x1][y1] = max(a[x1][y1], 0);
+// a * b = c (поэлементное произведение)
+vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
+    
+    if ((a.size() != b.size()) && (a[0].size() != b[0].size())) {
+        cout << "Размеры массивов не совпадают" << endl;
+        exit(-1);
+    }
+
+    vector<vector<double>> c = createFilledVector(a.size(), a[0].size());
+
+    for (int y1 = 0; y1 < a.size(); y1++) {
+        for (int x1 = 0; x1 < a[0].size(); x1++) {
+            c[y1][x1] = a[y1][x1] * b[y1][x1];
         }
     }
 
-    return;
+    return c;
 }
 
+
+// Поэлементный максимум
+vector<vector<double>> reluFunction(vector<vector<double>> a) {
+
+    for (int y1 = 0; y1 < a.size(); y1++) {
+        for (int x1 = 0; x1 < a[0].size(); x1++) {
+            a[y1][x1] = max(a[y1][x1], 0);
+        }
+    }
+
+    return a;
+}
+
+// Прямое распространение
 void directDistributionFunc(double **pic, vector<vector<float>> w, int size) {
 
     for (int x = 0; x < size; x++) {
@@ -58,71 +70,72 @@ void directDistributionFunc(double **pic, vector<vector<float>> w, int size) {
     }
 }
 
-void convolutionFunc(double** pic, int currentSize) {
+vector<vector<double>> convolutionFunc(vector<vector<double>> a) {
     vector<vector<double>> finalBuffer;
+    int currentSize = a.size();
 
-    for (int x = 0; x < currentSize; x += 2) {
+    for (int y = 0; y < currentSize; y += 2) {
         vector<double> buffer;
-        for (int y = 0; y < currentSize; y += 2) {
+        for (int x = 0; x < currentSize; x += 2) {
 
-            double c = max(pic[x][y], pic[x + 1][y]);
-            c = max(c, pic[x][y + 1]);
-            c = max(c, pic[x + 1][y + 1]);
+            double c = max(a[y][x], a[y][x + 1]);
+            c = max(c, a[y + 1][x]);
+            c = max(c, a[y + 1][x + 1]);
 
             buffer.push_back(c);
 
-            pic[x][y] = 0;
-            pic[x + 1][y] = 0;
-            pic[x][y + 1] = 0;
-            pic[x + 1][y + 1] = 0;
+            a[y][x] = 0;
+            a[y][x + 1] = 0;
+            a[y + 1][x] = 0;
+            a[y + 1][x + 1] = 0;
         }
         finalBuffer.push_back(buffer);
     }
 
-    for (int x = 0; x < currentSize/2; x ++) {
-        for (int y = 0; y < currentSize/2; y ++) {
-            pic[x][y] = finalBuffer[x][y];
-            cout << setw(6) << setprecision(4) << pic[x][y] << " ";
+    for (int y = 0; y < currentSize/2; y++) {
+        for (int x = 0; x < currentSize/2; x++) {
+            a[y][x] = finalBuffer[y][x];
+            cout << setw(6) << setprecision(4) << a[y][x] << " ";
         }
         cout << endl;
     }
 
-    return;
+    return finalBuffer;
 }
 
-void softmax(double** a, int x) {
+vector<double> softmax(vector<vector<double>> a) {
     double sum = 0;
+    vector<double> c;
 
-    for (int i = 0; i < x; i++)
+    for (int i = 0; i < a.size(); i++)
         sum += a[i][0];
 
-    for (int i = 0; i < x; i++)
+    for (int i = 0; i < a.size(); i++)
         a[i][0] /= sum;
 
-    return;
+    for (int i = 0; i < a.size(); i++)
+        c.push_back(a[i][0]);
+
+    return c;
 }
 
-vector<vector<vector<float>>> generationWeights(vector<vector<vector<float>>> weights, unsigned PICTURE_SIZE) {
-    int currentLayerSize;
+vector<vector<vector<double>>> generationCores(unsigned CORE_SIZE, unsigned CORES_NUM) {
+    vector<vector<vector<double>>> cores;
 
-    // Добавить функцию
-    for (int i = 0; i < log2(PICTURE_SIZE); i++) {
-        currentLayerSize = PICTURE_SIZE / pow(2, i);
+    for(int i = 0; i < CORES_NUM; i++)
+    {
+        cores.push_back(vector<vector<double>> {});
 
-        vector<vector<float>> layer;
-        for (int k = 0; k < currentLayerSize; k++)
-            layer.push_back(vector<float> {});
+        cores[i] = createFilledVector(CORE_SIZE,CORE_SIZE);
 
-        for (int x = 0; x < currentLayerSize; x++) {
-            for (int y = 0; y < currentLayerSize; y++) {
-                layer[x].push_back((float) rand() / RAND_MAX);
+        for (int y1 = 0; y1 < CORES_NUM; y1++) {
+            for (int x1 = 0; x1 < CORES_NUM; x1++) {
+                cores[i][y1][x1] = rand();
             }
         }
-
-        weights.push_back(layer);
     }
 
-    return weights;
+    return cores;
 }
 
 
@@ -135,6 +148,9 @@ int main()
 	
 	const wstring PATH = L"C:/Digits/";
     const string PATH_S = "C:/Digits/";
+
+
+
 	
 	vector<vector<string>> trainingFiles;
 
@@ -187,8 +203,11 @@ int main()
 
 
     // Создание весов
-    vector<vector<vector<float>>> weights;
-    weights = generationWeights(weights, PICTURE_SIZE);
+    vector<vector<vector<double>>> cores;
+    cores = generationCores(2, 32);
+
+    for (int i = 0; i < 32; i++)
+        cout << cores[i][0][0]<<endl;
 
     const int epochs = 1;
 
