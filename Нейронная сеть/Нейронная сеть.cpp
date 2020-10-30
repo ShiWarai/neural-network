@@ -9,9 +9,16 @@
 #include <time.h>
 #include "BMP_reading.h"
 
-
 using namespace std;
 using namespace BMP;
+
+double max4(double a, double b, double c, double d)
+{
+    a = max(a, b);
+    c = max(a, c);
+    d = max(c, d);
+    return d;
+}
 
 // Создание нулевой матрицы Y x X
 vector<vector<double>> createFilledVector(int y, int x) {
@@ -26,7 +33,6 @@ vector<vector<double>> createFilledVector(int y, int x) {
 
     return c;
 }
-
 
 // a * b = c (поэлементное произведение)
 vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
@@ -46,7 +52,6 @@ vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
 
     return c;
 }
-
 
 // Поэлементный максимум
 vector<vector<double>> reluFunction(vector<vector<double>> a) {
@@ -70,6 +75,7 @@ void directDistributionFunc(double **pic, vector<vector<float>> w, int size) {
     }
 }
 
+// Свёртка
 vector<vector<double>> convolutionFunc(vector<vector<double>> a) {
     vector<vector<double>> finalBuffer;
     int currentSize = a.size();
@@ -78,9 +84,7 @@ vector<vector<double>> convolutionFunc(vector<vector<double>> a) {
         vector<double> buffer;
         for (int x = 0; x < currentSize; x += 2) {
 
-            double c = max(a[y][x], a[y][x + 1]);
-            c = max(c, a[y + 1][x]);
-            c = max(c, a[y + 1][x + 1]);
+            double c = max4(a[y][x], a[y][x + 1], a[y + 1][x], a[y + 1][x + 1]);
 
             buffer.push_back(c);
 
@@ -103,6 +107,7 @@ vector<vector<double>> convolutionFunc(vector<vector<double>> a) {
     return finalBuffer;
 }
 
+// Подсчёт вероятности цифр от 0 до 9 в процентах
 vector<double> softmax(vector<vector<double>> a) {
     double sum = 0;
     vector<double> c;
@@ -119,6 +124,7 @@ vector<double> softmax(vector<vector<double>> a) {
     return c;
 }
 
+// Первое заполнение ядер
 vector<vector<vector<double>>> generationCores(unsigned CORE_SIZE, unsigned CORES_NUM) {
     vector<vector<vector<double>>> cores;
 
@@ -130,14 +136,13 @@ vector<vector<vector<double>>> generationCores(unsigned CORE_SIZE, unsigned CORE
 
         for (int y1 = 0; y1 < CORES_NUM; y1++) {
             for (int x1 = 0; x1 < CORES_NUM; x1++) {
-                cores[i][y1][x1] = rand();
+                cores[i][y1][x1] = (double)(rand() % 100) / 10;
             }
         }
     }
 
     return cores;
 }
-
 
 int main()
 {
@@ -149,9 +154,6 @@ int main()
 	const wstring PATH = L"C:/Digits/";
     const string PATH_S = "C:/Digits/";
 
-
-
-	
 	vector<vector<string>> trainingFiles;
 
 	WIN32_FIND_DATA FindFileData;
@@ -178,9 +180,7 @@ int main()
 	trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
 	FindClose(handleFiles);
 
-    cout << endl;
-    cout << endl;
-
+    cout << "\n\n";
 
 	// Вывод названий и цифр
 	for(int i = 0; i < trainingFiles.size(); i++)
@@ -200,9 +200,7 @@ int main()
         cout << endl;
     }
 
-
-
-    // Создание весов
+    // Создание ядер
     vector<vector<vector<double>>> cores;
     cores = generationCores(2, 32);
 
