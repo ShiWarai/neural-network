@@ -65,18 +65,62 @@ vector<vector<double>> reluFunction(vector<vector<double>> a) {
     return a;
 }
 
-// Прямое распространение
-void directDistributionFunc(double **pic, vector<vector<float>> w, int size) {
+vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned padding) {
 
-    for (int x = 0; x < size; x++) {
-        for (int y = 0; y < size; y++) {
-            pic[x][y] = pic[x][y] * w[x][y];
+    auto new_matrix = createFilledVector(matrix.size() + padding, matrix[0].size() + padding);
+
+    // Заполнение расширения 
+    for (int padd_ = 1; padd_ <= padding; padd_++) {
+        int panding = (int)ceil((double)padd_ / 2) - 1;
+
+        // Нечётное дополнение
+        if (padd_ % 2 == 1) {
+
         }
+        // Чётное дополнение
+        else {
+
+        }
+
     }
+
+    // Заполнение центра
+
+    return new_matrix;
+
 }
 
-// Свёртка
-vector<vector<double>> convolutionFunc(vector<vector<double>> a) {
+// Главная функция прямого распространения
+vector<vector<double>> directDistributionFunc(vector<vector<vector<double>>> pic, vector<vector<vector<double>>> core) {
+    unsigned y_size = pic[0].size();
+    unsigned x_size = pic[0][0].size();
+
+
+    auto processed_pic = createFilledVector(y_size, x_size);
+
+    int dimensions = pic.size();
+
+    for (int y = 0; y < y_size; y++) {
+        for (int x = 0; x < x_size; x++) {
+            double sum = 0;
+
+            for (int dim = 0; dim < dimensions; dim++) {
+
+                // Работа с плоскостью
+                vector<vector<double>> flat = matrixExpansion(pic[dim], core.size() - 1);
+
+
+            }
+
+            processed_pic[y][x] = sum;
+        }
+    }
+
+    return processed_pic;
+}
+
+// Свёртка к максимальному
+vector<vector<double>> max_pooling(vector<vector<double>> a) {
     vector<vector<double>> finalBuffer;
     int currentSize = a.size();
 
@@ -125,23 +169,23 @@ vector<double> softmax(vector<vector<double>> a) {
 }
 
 // Первое заполнение ядер
-vector<vector<vector<double>>> generationCores(unsigned CORE_SIZE, unsigned CORES_NUM) {
-    vector<vector<vector<double>>> cores;
+vector<vector<vector<double>>> generationCore(unsigned CORE_SIZE, unsigned DEPTH) {
+    vector<vector<vector<double>>> core;
 
-    for(int i = 0; i < CORES_NUM; i++)
+    for (int i = 0; i < DEPTH; i++)
     {
-        cores.push_back(vector<vector<double>> {});
+        core.push_back(vector<vector<double>> {});
 
-        cores[i] = createFilledVector(CORE_SIZE,CORE_SIZE);
+        core[i] = createFilledVector(CORE_SIZE, CORE_SIZE);
 
-        for (int y1 = 0; y1 < CORES_NUM; y1++) {
-            for (int x1 = 0; x1 < CORES_NUM; x1++) {
-                cores[i][y1][x1] = (double)(rand() % 100) / 10;
+        for (int y1 = 0; y1 < CORE_SIZE; y1++) {
+            for (int x1 = 0; x1 < CORE_SIZE; x1++) {
+                core[i][y1][x1] = (double)(rand() % 10);
             }
         }
     }
 
-    return cores;
+    return core;
 }
 
 int main()
@@ -191,21 +235,22 @@ int main()
         BMP_BW image(trainingFiles[k][1], (string)(PATH_S + trainingFiles[k][0]), false);
 
         // Тестовый вывод
+
+        /*
         for (int y = PICTURE_SIZE - 1; y >= 0; y--) {
             for (int x = 0; x < PICTURE_SIZE; x++)
                 cout << setw(3) << setprecision(3)<< image[y][x] << " ";
             cout << endl;
         }
+        */
 
         cout << endl;
     }
 
     // Создание ядер
-    vector<vector<vector<double>>> cores;
-    cores = generationCores(2, 32);
+    vector<vector<vector<vector<vector<double>>>>> cores; 
+    // Набор ядер для слоя (ядро определённого слоя (глубина ядра (ширина и высота)) )
 
-    for (int i = 0; i < 32; i++)
-        cout << cores[i][0][0]<<endl;
 
     const int epochs = 1;
 
@@ -215,11 +260,46 @@ int main()
     // Итерации обучения (прямой и обратный ход)
     for (int epoch = 1; epoch <= epochs; epoch++) {
         for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) {
-            cout << "(" << epoch << ", " << trainingFiles[fileNum][1] << ") :" << endl;
+
+            BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
+            cout << "(" << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
             
+            // Слой 1
+            vector<vector<vector<vector<double>>>> cores_set;
+            int output_dim = 32;
+
+            if (epoch == 1 && fileNum == 0) {
+
+                for (int i = 0; i < output_dim; i++) {
+                    cores_set.push_back(vector<vector<vector<double>>> {});
+                    cores_set[i] = generationCore(2, 1);
+                }
+
+                cores[0] = cores_set;
+            }
+            else {
+                cores_set = cores[0];
+            }
+
+            vector<vector<vector<double>>> processed_images;
+            for (int i = 0; i < output_dim; i++) {
+                auto core = cores_set[i];
+
+                processed_images.push_back(directDistributionFunc(vector<vector<vector<double>>> {image.getImage()}, core));
+            }
+
+
+
+
+
+
+
             
             delta.clear();
         }
+
+
+
     }
 	
 	return 0;

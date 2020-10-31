@@ -201,6 +201,11 @@ namespace BMP {
 
             return pic;
         }
+
+        std::vector<std::vector<double>> getImage() {
+            return this->image;
+        }
+
     };
 
 
