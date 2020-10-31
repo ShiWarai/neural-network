@@ -70,16 +70,81 @@ vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned p
     auto new_matrix = createFilledVector(matrix.size() + padding, matrix[0].size() + padding);
 
     // Заполнение расширения 
-    for (int padd_ = 1; padd_ <= padding; padd_++) {
+    for (int padd_ = 1; padd_ <= padding * 2; padd_++) {
         int panding = (int)ceil((double)padd_ / 2) - 1;
 
-        // Нечётное дополнение
-        if (padd_ % 2 == 1) {
 
+        // Для север-запад
+        if ((padd_ - 1) % 4 == 0 || (padd_ - 2) % 4 == 0)
+        {
+            // Нечётное дополнение
+            if (padd_ % 2 == 1)
+            {
+                for (int i = 0, j = 0; i < new_matrix.size() - padding; i++, j++)
+                {
+                    if (i - padding < 0 && padd_ != padding * 2)
+                    {
+                        new_matrix[padd_ - 1][i] = matrix[0][0];
+                        j--;
+                    }
+                    else
+                    {
+                        new_matrix[padd_ - 1][i] = matrix[0][j];
+                    }
+                }
+            }
+            // Чётное дополнение
+            else
+            {
+                for (int i = new_matrix.size() - 1, j = matrix.size() - 1; i >= 0 + padding; i--, j--)
+                {
+                    if (i + padding > new_matrix.size() - 1 && padd_ != padding * 2)
+                    {
+                        new_matrix[i][padd_ - 1] = matrix[matrix.size() - 1][0];
+                        j++;
+                    }
+                    else
+                    {
+                        new_matrix[i][padd_ - 1] = matrix[j][0];
+                    }
+                }
+            }
         }
-        // Чётное дополнение
-        else {
-
+        // Для юг-восток
+        else
+        {
+            // Нечётное дополнение
+            if (padd_ % 2 == 1)
+            {
+                for (int i = new_matrix.size() - 1, j = matrix.size() - 1; i >= 0 + padding; i--, j--)
+                {
+                    if (i + padding > new_matrix.size() - 1 && padd_ != padding * 2)
+                    {
+                        new_matrix[new_matrix.size() - padd_][i] = matrix[matrix.size() - 1][matrix.size() - 1];
+                        j++;
+                    }
+                    else
+                    {
+                        new_matrix[new_matrix.size() - padd_][i] = matrix[0][j];
+                    }
+                }
+            }
+            // Чётное дополнение
+            else
+            {
+                for (int i = 0, j = 0; i < new_matrix.size() - padding; i++, j++)
+                {
+                    if (i - padding < 0 && padd_ != padding * 2)
+                    {
+                        new_matrix[new_matrix.size() - padd_][i] = matrix[0][matrix.size() - 1];
+                        j--;
+                    }
+                    else
+                    {
+                        new_matrix[new_matrix.size() - padd_][i] = matrix[0][j];
+                    }
+                }
+            }
         }
 
     }
