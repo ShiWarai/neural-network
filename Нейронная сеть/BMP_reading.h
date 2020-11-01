@@ -127,7 +127,7 @@ namespace BMP {
                 if (normalizationFunc != NULL)
                     picture[i].push_back(normalizationFunc((rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 256));
                 else
-                    picture[i].push_back((rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 3);
+                    picture[i].push_back(255 - (rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 3);
 
             }
         }
@@ -151,7 +151,6 @@ namespace BMP {
         std::string name;
         std::string fileWay;
 
-
         void loadImage(bool getNormalized) {
             if(getNormalized)
                 this->image = getPicture(this->fileWay, &normalizationFunc);
@@ -174,6 +173,13 @@ namespace BMP {
 
         }
 
+        unsigned getWidth() {
+            return (unsigned)this->X_SIZE;
+        }
+
+        unsigned getHeight() {
+            return (unsigned)this->Y_SIZE;
+        }
 
         auto operator[] (const unsigned int index)
         {
@@ -208,4 +214,5 @@ namespace BMP {
     };
 
 }
-#endif // MAIN_H_INCLUDEDs
+
+#endif // MAIN_H_INCLUDED

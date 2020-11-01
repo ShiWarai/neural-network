@@ -21,6 +21,18 @@ double max4(double a, double b, double c, double d)
 	return a;
 }
 
+void consoleOutMatrix(vector<vector<double>> a) {
+	for (int y = 0; y < a.size(); y++) {
+		for (int x = 0; x < a[0].size(); x++)
+			cout << setw(6) << setprecision(3) << a[y][x];
+		cout << endl;
+	}
+
+	cout << endl;
+
+	return;
+}
+
 // Создание нулевой матрицы Y x X
 vector<vector<double>> createFilledVector(int y, int x) {
 	vector<vector<double>> c;
@@ -211,36 +223,38 @@ vector<vector<double>> matrixSlicer(vector<vector<double>> matrix, unsigned y0, 
 }
 
 // Главная функция прямого распространения
-vector<vector<double>> directDistributionFunc(vector<vector<vector<double>>> pic, vector<vector<vector<double>>> core) {
+vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core, vector<vector<double>> bias) {
 
-	if (core.size() != pic.size())
+	if (core.size() != matrix.size())
 		exit(0);
 
-	unsigned y_size = pic[0].size();
-	unsigned x_size = pic[0][0].size();
+	unsigned y_size = matrix[0].size();
+	unsigned x_size = matrix[0][0].size();
 
 
 	auto processed_pic = createFilledVector(y_size, x_size);
 
-	int dimensions = pic.size();
-	int panding_ = (int)ceil((double)(core[0].size() - 1) / 2); // Определяем начало гл. массива
+	int dimensions = matrix.size();
+	int panding_ = (int)ceil((double)(core.size() - 1) / 2); // Определяем начало гл. массива
 
 	vector<vector<double>> flat;
 	for (int dim = 0; dim < dimensions; dim++) {
 
 		// Работа с плоскостью
-		flat = matrixExpansion(pic[dim], core[0].size() - 1); // Получаем расширенную матрицу плоскости
+		flat = matrixExpansion(matrix[dim], core[0].size() - 1); // Получаем расширенную матрицу плоскости
 
 		for (int y = 0; y < y_size; y++) {
 			for (int x = 0; x < x_size; x++){
 
-				auto slice = matrixSlicer(flat, panding_ + y - (core[dim].size() - 1), panding_ + x - (core[dim][0].size() - 1), core[dim].size(), core[dim][0].size()); // Получаем кусок матрицы
+				auto slice = matrixSlicer(flat, y, x, core[dim].size(), core[dim][0].size()); // Получаем кусок матрицы
 				slice = dot(slice, core[dim]); // Находим произведение
 
 				processed_pic[y][x] += elementsSum(slice); // Складываем слои
 			}
 		}
 	}
+
+	processed_pic = sum(processed_pic, bias);
 
 	// Выводим с использованием relu()
 	return reluFunction(processed_pic);
@@ -310,7 +324,7 @@ vector<double> flatten(vector<vector<double>> a) {
 }
 
 // Первое заполнение ядер
-vector<vector<vector<double>>> generationCore(unsigned CORE_SIZE, unsigned DEPTH) {
+vector<vector<vector<double>>> generationCore(unsigned DEPTH, unsigned CORE_SIZE) {
 	vector<vector<vector<double>>> core;
 
 	for (int i = 0; i < DEPTH; i++)
@@ -321,13 +335,55 @@ vector<vector<vector<double>>> generationCore(unsigned CORE_SIZE, unsigned DEPTH
 
 		for (int y1 = 0; y1 < CORE_SIZE; y1++) {
 			for (int x1 = 0; x1 < CORE_SIZE; x1++) {
-				core[i][y1][x1] = ((double)rand() /(RAND_MAX + 1)) * 2;
+				core[i][y1][x1] = 1 - ((double)rand() /(RAND_MAX)) * 2;
 			}
 		}
 	}
 
 	return core;
 }
+
+// Первое заполнение смещения
+vector<vector<double>> generationBias(int a, int b) {
+	vector<vector<double>> bias;
+
+	bias = createFilledVector(a, b);
+
+	for (int y1 = 0; y1 < a; y1++) {
+		for (int x1 = 0; x1 < b; x1++) {
+			bias[y1][x1] = ceil(((double)rand() / (RAND_MAX )));
+		}
+	}
+
+	return bias;
+}
+
+// Состоит из свёртки и сжатия
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, vector<vector<vector<double>>>  biases_set, unsigned outputLayers, bool do_max_pooling = true) {
+
+	vector<vector<vector<double>>> layer;
+
+	vector<vector<double>> new_matrix;
+
+	vector<vector<vector<double>>> core;
+	vector<vector<double>> bias;
+	for (int i = 0; i < outputLayers; i++) {
+		core = cores_set[i];
+		bias = biases_set[i];
+
+		new_matrix = getProcessedMatrix(input, core, bias);
+
+		// Max_pooling 2x2
+		if(do_max_pooling)
+			new_matrix = max_pooling(new_matrix);
+
+		// Добавляем уже сжатый слой
+		layer.push_back(new_matrix);
+	}
+
+	return layer;
+}
+
 
 // Программа
 int main()
@@ -337,9 +393,11 @@ int main()
 	const wstring PATH = L"C:/Digits/";
 	const string PATH_S = "C:/Digits/";
 
-	srand(time(NULL));
+	srand(abs(rand() - time(NULL)) * 100);
 	setlocale(LC_ALL, "");
-	cout.setf(ios::fixed);
+	// cout.setf(ios::fixed);
+
+	cout << rand() << endl;
 
 	vector<vector<string>> trainingFiles;
 
@@ -373,10 +431,10 @@ int main()
 	for (int i = 0; i < trainingFiles.size(); i++)
 		cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
 
-
+	// Проверка чтения изображения
 	for (int k = 0; k < trainingFiles.size(); k++) {
 
-		BMP_BW image(trainingFiles[k][1], (string)(PATH_S + trainingFiles[k][0]), false);
+		BMP_BW image(trainingFiles[k][1], (string)(PATH_S + trainingFiles[k][0]), true);
 
 		// Тестовый вывод
 
@@ -391,9 +449,9 @@ int main()
 		cout << endl;
 	}
 
-	// Создание ядер
+	// Инициализация ядер и смещения
 	vector<vector<vector<vector<vector<double>>>>> cores;
-	// Набор ядер для слоя (ядро определённого слоя (глубина ядра (ширина и высота)) )
+	vector<vector<vector<vector<double>>>> biases;
 
 
 	const int epochs = 1;
@@ -403,124 +461,124 @@ int main()
 
 	// Итерации обучения (прямой и обратный ход)
 	for (int epoch = 1; epoch <= epochs; epoch++) {
+
 		for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) { // trainingFiles.size()
 
 			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), true);
 			cout << "(" << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
 
 			// Слой 1
-			// cout << "2 LAYER" << endl;
+			cout << "1 LAYER" << endl;
+			unsigned layer_num = 1;
 
-			vector<vector<vector<vector<double>>>> cores_set;
 			int output_dim = 32;
 
-			// Генерация или чтение набора ядер
+			// Генерация или чтение набора ядер и смещения
+			vector<vector<vector<vector<double>>>> cores_set;
+			vector<vector<vector<double>>> biases_set;
 			if (epoch == 1 && fileNum == 0) {
 
 				for (int i = 0; i < output_dim; i++) {
 					cores_set.push_back(vector<vector<vector<double>>> {});
-					cores_set[i] = generationCore(3, 1);
+					cores_set[i] = generationCore(1, 2);
+
+					biases_set.push_back(generationBias(image.getHeight(), image.getWidth()));
 				}
 
 				cores.push_back(cores_set);
+				biases.push_back(biases_set);
 			}
 			else {
-				cores_set = cores[0];
+				cores_set = cores[layer_num - 1];
+				biases_set = biases[layer_num - 1];
 			}
 
-			vector<vector<vector<double>>> layers1;
+			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, biases_set, output_dim);
 
-			vector<vector<double>> new_matrix;
-			for (int i = 0; i < output_dim; i++) {
-				auto core = cores_set[i];
-				new_matrix = directDistributionFunc(vector<vector<vector<double>>> {image.getImage()}, core);
-
-				// Max_pooling 2x2
-				new_matrix = max_pooling(new_matrix);
-
-				// Добавляем уже сжатый слой
-				layers1.push_back(new_matrix); 
-			}
-
+			/*
+			for(int i = 0; i < layer1.size();i++)
+				consoleOutMatrix(layer1[i]);
+			*/
 
 			// Слой 2
-			// cout << "2 LAYER" << endl;
+			cout << "2 LAYER" << endl;
+			layer_num += 1;
 
 			output_dim = 16;
-			cores_set.clear();
 
 			// Генерация или чтение набора ядер
+			cores_set.clear();
+			biases_set.clear();
 			if (epoch == 1 && fileNum == 0) {
 
 				for (int i = 0; i < output_dim; i++) {
 					cores_set.push_back(vector<vector<vector<double>>> {});
-					cores_set[i] = generationCore(3, 32);
+					cores_set[i] = generationCore(layer1.size(), 2);
+
+					biases_set.push_back(generationBias(layer1.size(), layer1[0].size()));
 				}
 
 				cores.push_back(cores_set);
+				biases.push_back(biases_set);
 			}
 			else {
-				cores_set = cores[1];
+				cores_set = cores[layer_num - 1];
+				biases_set = biases[layer_num - 1];
 			}
 
-			vector<vector<vector<double>>> layers2;
+			vector<vector<vector<double>>> layer2 = Dense(layer1, cores_set, biases_set, output_dim);
 
-			new_matrix.clear();
-			for (int i = 0; i < output_dim; i++) {
-				auto core = cores_set[i];
-				new_matrix = directDistributionFunc(layers1, core);
-
-				// Max_pooling 2x2
-				new_matrix = max_pooling(new_matrix);
-
-				layers2.push_back(new_matrix);
-			}
+			/*
+			for (int i = 0; i < layer2.size(); i++)
+				consoleOutMatrix(layer2[i]);
+			*/
 
 			// Слой 3
-			// cout << "3 LAYER" << endl;
+			cout << "3 LAYER" << endl;
+			layer_num += 1;
 
 			output_dim = 16;
-			cores_set.clear();
 
 			// Генерация или чтение набора ядер
+			cores_set.clear();
+			biases_set.clear();
 			if (epoch == 1 && fileNum == 0) {
 
 				for (int i = 0; i < output_dim; i++) {
 					cores_set.push_back(vector<vector<vector<double>>> {});
-					cores_set[i] = generationCore(3, 16);
+					cores_set[i] = generationCore(layer2.size(), 2);
+
+					biases_set.push_back(generationBias(layer2.size(), layer2[0].size()));
 				}
 
 				cores.push_back(cores_set);
+				biases.push_back(biases_set);
 			}
 			else {
-				cores_set = cores[2];
+				cores_set = cores[layer_num - 1];
+				biases_set = biases[layer_num - 1];
 			}
 
-			vector<vector<vector<double>>> layers3;
+			vector<vector<vector<double>>> layer3 = Dense(layer2, cores_set, biases_set, output_dim);
 
-			new_matrix.clear();
-			for (int i = 0; i < output_dim; i++) {
-				auto core = cores_set[i];
-				new_matrix = directDistributionFunc(layers2, core);
-
-				// Max_pooling 2x2
-				new_matrix = max_pooling(new_matrix);
-
-				layers3.push_back(new_matrix);
-			}
+			/*
+			for (int i = 0; i < layer3.size(); i++)
+				consoleOutMatrix(layer3[i]);
+			*/
 
 			// 4 слой
-			// cout << "4 LAYER" << endl;
-
+			cout << "4 LAYER" << endl;
 			vector<vector<vector<double>>> layer4;
 
-			new_matrix.clear();
-			for (int i = 0; i < layers3.size(); i++) {
-				new_matrix.push_back(flatten(layers3[i]));
+			vector<vector<double>> new_matrix;
+			for (int i = 0; i < layer3.size(); i++) {
+				new_matrix.push_back(flatten(layer3[i]));
 
 				layer4.push_back(vector<vector<double>>{ {0} });
-				for (int x = 0; x < new_matrix[i].size(); x++)
+				for (int x = 0; x < new_matrix[i].size(); x++) {
 					layer4[i][0][0] += new_matrix[i][x];
+				}
+
 			}
 
 			/*
@@ -530,40 +588,36 @@ int main()
 
 			// 5 слой (слой выхода)
 			// cout << "5 LAYER" << endl;
+			layer_num += 1;
 
 			output_dim = 10;
 			cores_set.clear();
+			biases_set.clear();
 
 			// Генерация или чтение набора ядер
 			if (epoch == 1 && fileNum == 0) {
 
 				for (int i = 0; i < output_dim; i++) {
 					cores_set.push_back(vector<vector<vector<double>>> {});
-					cores_set[i] = generationCore(1, layer4.size());
+					cores_set[i] = generationCore(layer4.size(), 1);
+
+					biases_set.push_back(generationBias(layer4.size(), layer4[0].size()));
 				}
 
 				cores.push_back(cores_set);
+				biases.push_back(biases_set);
 			}
 			else {
-				cores_set = cores[3];
+				cores_set = cores[layer_num - 1];
+				biases_set = biases[layer_num - 1];
 			}
 
-			vector < vector < vector<double>>> layer5;
-
-			new_matrix.clear();
-			for (int i = 0; i < output_dim; i++) {
-				auto core = cores_set[i];
-
-				new_matrix = directDistributionFunc(layer4, core);
-
-				layer5.push_back(new_matrix);
-
-			}
+			vector <vector<vector<double>>> layer5 = Dense(layer4, cores_set, biases_set, output_dim, false);
 
 			// Просчёт вероятностей
 			auto result = softmax(layer5);
 
-			cout << "Result:" << endl;
+			cout << endl << "Result:" << endl;
 			for (int x = 0; x < result.size(); x++)
 				cout << result[x] << endl;
 			cout << endl;
@@ -580,11 +634,8 @@ int main()
 			}
 
 			cout << "Prediction:" << prediction << endl << endl;
-			
+
 		}
-
-
-
 	}
 
 	return 0;
