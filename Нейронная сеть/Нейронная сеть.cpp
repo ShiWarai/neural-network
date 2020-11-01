@@ -280,18 +280,21 @@ vector<vector<double>> max_pooling(vector<vector<double>> a) {
 }
 
 // Подсчёт вероятности цифр от 0 до 9 в процентах
-vector<double> softmax(vector<vector<double>> a) {
+vector<double> softmax(vector < vector<vector<double>>> a) {
 	double sum = 0;
 	vector<double> c;
 
 	for (int i = 0; i < a.size(); i++)
-		sum += a[i][0];
+		sum += a[i][0][0];
+
+	if (sum == 0)
+		return vector<double>{NULL};
 
 	for (int i = 0; i < a.size(); i++)
-		a[i][0] /= sum;
+		a[i][0][0] /= sum;
 
 	for (int i = 0; i < a.size(); i++)
-		c.push_back(a[i][0]);
+		c.push_back(a[i][0][0]);
 
 	return c;
 }
@@ -318,7 +321,7 @@ vector<vector<vector<double>>> generationCore(unsigned CORE_SIZE, unsigned DEPTH
 
 		for (int y1 = 0; y1 < CORE_SIZE; y1++) {
 			for (int x1 = 0; x1 < CORE_SIZE; x1++) {
-				core[i][y1][x1] = 1 - ((double)rand() /(RAND_MAX+1)) * 2;
+				core[i][y1][x1] = ((double)rand() /(RAND_MAX + 1)) * 2;
 			}
 		}
 	}
@@ -329,22 +332,14 @@ vector<vector<vector<double>>> generationCore(unsigned CORE_SIZE, unsigned DEPTH
 // Программа
 int main()
 {
-	/*
-	vector<vector<double>> a = { {1,4,2},{32,2,0},{5,4,7} };
-	auto b = flatten(a);
-
-	for (int y1 = 0; y1 < b.size(); y1++) {
-		cout << setw(3) << b[y1];
-	}
-	*/
 
 	const unsigned int PICTURE_SIZE = 16;
-	srand(time(NULL));
-
-	setlocale(LC_ALL, "");
-
 	const wstring PATH = L"C:/Digits/";
 	const string PATH_S = "C:/Digits/";
+
+	srand(time(NULL));
+	setlocale(LC_ALL, "");
+	cout.setf(ios::fixed);
 
 	vector<vector<string>> trainingFiles;
 
@@ -378,6 +373,7 @@ int main()
 	for (int i = 0; i < trainingFiles.size(); i++)
 		cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
 
+
 	for (int k = 0; k < trainingFiles.size(); k++) {
 
 		BMP_BW image(trainingFiles[k][1], (string)(PATH_S + trainingFiles[k][0]), false);
@@ -407,12 +403,14 @@ int main()
 
 	// Итерации обучения (прямой и обратный ход)
 	for (int epoch = 1; epoch <= epochs; epoch++) {
-		for (int fileNum = 0; fileNum < 1; fileNum++) { // trainingFiles.size()
+		for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) { // trainingFiles.size()
 
-			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
+			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), true);
 			cout << "(" << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
 
 			// Слой 1
+			// cout << "2 LAYER" << endl;
+
 			vector<vector<vector<vector<double>>>> cores_set;
 			int output_dim = 32;
 
@@ -421,7 +419,7 @@ int main()
 
 				for (int i = 0; i < output_dim; i++) {
 					cores_set.push_back(vector<vector<vector<double>>> {});
-					cores_set[i] = generationCore(2, 1);
+					cores_set[i] = generationCore(3, 1);
 				}
 
 				cores.push_back(cores_set);
@@ -437,14 +435,6 @@ int main()
 				auto core = cores_set[i];
 				new_matrix = directDistributionFunc(vector<vector<vector<double>>> {image.getImage()}, core);
 
-				for (int y = 0; y < new_matrix.size(); y++) {
-					for (int x= 0; x < new_matrix[0].size(); x++) {
-						cout << setw(5) << setprecision(3)<< new_matrix[y][x];
-					}
-					cout << endl;
-				}
-				cout << endl;
-
 				// Max_pooling 2x2
 				new_matrix = max_pooling(new_matrix);
 
@@ -453,9 +443,9 @@ int main()
 			}
 
 
-			cout << "2 LAYER" << endl;
-
 			// Слой 2
+			// cout << "2 LAYER" << endl;
+
 			output_dim = 16;
 			cores_set.clear();
 
@@ -464,7 +454,7 @@ int main()
 
 				for (int i = 0; i < output_dim; i++) {
 					cores_set.push_back(vector<vector<vector<double>>> {});
-					cores_set[i] = generationCore(2, 32);
+					cores_set[i] = generationCore(3, 32);
 				}
 
 				cores.push_back(cores_set);
@@ -480,22 +470,117 @@ int main()
 				auto core = cores_set[i];
 				new_matrix = directDistributionFunc(layers1, core);
 
-				for (int y = 0; y < new_matrix.size(); y++) {
-					for (int x = 0; x < new_matrix[0].size(); x++) {
-						cout << setw(5) << setprecision(3)<< new_matrix[y][x];
-					}
-					cout << endl;
-				}
-				cout << endl;
-
 				// Max_pooling 2x2
 				new_matrix = max_pooling(new_matrix);
 
 				layers2.push_back(new_matrix);
 			}
 
+			// Слой 3
+			// cout << "3 LAYER" << endl;
 
-			delta.clear();
+			output_dim = 16;
+			cores_set.clear();
+
+			// Генерация или чтение набора ядер
+			if (epoch == 1 && fileNum == 0) {
+
+				for (int i = 0; i < output_dim; i++) {
+					cores_set.push_back(vector<vector<vector<double>>> {});
+					cores_set[i] = generationCore(3, 16);
+				}
+
+				cores.push_back(cores_set);
+			}
+			else {
+				cores_set = cores[2];
+			}
+
+			vector<vector<vector<double>>> layers3;
+
+			new_matrix.clear();
+			for (int i = 0; i < output_dim; i++) {
+				auto core = cores_set[i];
+				new_matrix = directDistributionFunc(layers2, core);
+
+				// Max_pooling 2x2
+				new_matrix = max_pooling(new_matrix);
+
+				layers3.push_back(new_matrix);
+			}
+
+			// 4 слой
+			// cout << "4 LAYER" << endl;
+
+			vector<vector<vector<double>>> layer4;
+
+			new_matrix.clear();
+			for (int i = 0; i < layers3.size(); i++) {
+				new_matrix.push_back(flatten(layers3[i]));
+
+				layer4.push_back(vector<vector<double>>{ {0} });
+				for (int x = 0; x < new_matrix[i].size(); x++)
+					layer4[i][0][0] += new_matrix[i][x];
+			}
+
+			/*
+			for (int x = 0; x < layer4.size(); x++)
+				cout << setprecision(6) << layer4[x][0][0] << endl;
+			*/
+
+			// 5 слой (слой выхода)
+			// cout << "5 LAYER" << endl;
+
+			output_dim = 10;
+			cores_set.clear();
+
+			// Генерация или чтение набора ядер
+			if (epoch == 1 && fileNum == 0) {
+
+				for (int i = 0; i < output_dim; i++) {
+					cores_set.push_back(vector<vector<vector<double>>> {});
+					cores_set[i] = generationCore(1, layer4.size());
+				}
+
+				cores.push_back(cores_set);
+			}
+			else {
+				cores_set = cores[3];
+			}
+
+			vector < vector < vector<double>>> layer5;
+
+			new_matrix.clear();
+			for (int i = 0; i < output_dim; i++) {
+				auto core = cores_set[i];
+
+				new_matrix = directDistributionFunc(layer4, core);
+
+				layer5.push_back(new_matrix);
+
+			}
+
+			// Просчёт вероятностей
+			auto result = softmax(layer5);
+
+			cout << "Result:" << endl;
+			for (int x = 0; x < result.size(); x++)
+				cout << result[x] << endl;
+			cout << endl;
+
+			// Итоговое предсказание
+			int prediction = 0;
+
+			double maxProc = result[0];
+			for (int i = 0; i < result.size(); i++) {
+				if (result[i] > maxProc) {
+					maxProc = result[i];
+					prediction = i;
+				}
+			}
+
+			cout << "Prediction:" << prediction << endl << endl;
+			
 		}
 
 
