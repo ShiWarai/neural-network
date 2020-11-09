@@ -1,0 +1,26 @@
+#include "include.h";
+
+vector<vector<double>> createFilledVector(int y, int x);
+void writeMatrixInFile(ofstream &fout, vector<vector<double>> matrix);
+vector<vector<double>> readMatrixFromFile(ifstream &fin);
+double max4(double a, double b, double c, double d);
+void consoleOutMatrix(vector<vector<double>> a);
+vector<vector<double>> createFilledVector(int y, int x);
+vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b);
+vector<vector<double>> sumElements(vector<vector<double>> a, vector<vector<double>> b);
+double elementsSum(vector<vector<double>> a);
+vector<vector<double>> reluFunction(vector<vector<double>> a);
+double getLoss(vector<double> y, vector<double> solution);
+vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned padding);
+vector<vector<double>> matrixSlicer(vector<vector<double>> matrix, unsigned y0, unsigned x0, unsigned a, unsigned b);
+vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core, vector<vector<double>> bias);
+vector<vector<double>> max_pooling(vector<vector<double>> a);
+vector<double> softmax(vector < vector<vector<double>>> a);
+vector<double> flatten(vector<vector<double>> a);
+vector<vector<vector<double>>> generationCore(unsigned DEPTH, unsigned CORE_SIZE);
+vector<vector<double>> generationBias(int a, int b, double koef = 10);
+vector<double> getUnitaryCode(int vectorSize, int num);
+vector<double> generationWeights(int a);
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, vector<vector<vector<double>>>  biases_set, unsigned outputLayers, bool do_max_pooling = true);
+vector<double> getDelta(vector<double> a, int solution);
+double getLossDerivative(vector<double> a, vector<vector<double>> w, int j, int i, double solution);
