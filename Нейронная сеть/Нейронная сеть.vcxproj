@@ -143,8 +143,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BMP_reading.h" />
+    <ClInclude Include="neural_IO.h" />
     <ClInclude Include="functions.h" />
-    <ClInclude Include="include.h" />
+    <ClInclude Include="matrixFunctions.h" />
+    <ClInclude Include="neuralNetwork.h" />
+    <ClInclude Include="testingArea.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
