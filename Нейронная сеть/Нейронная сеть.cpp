@@ -19,11 +19,12 @@ using namespace BMP;
 #include "testingArea.h"
 
 vector<vector<double>> generationBias(int a, int b, double koef = 10);
-vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, vector<vector<vector<double>>>  biases_set, unsigned outputLayers, bool do_max_pooling = true);
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} }, bool do_max_pooling = true);
 
 // Программа
 int main()
 {
+
 	srand(abs(rand() - time(NULL)) * 100);
 	setlocale(LC_ALL, "ru");
 	// cout.setf(ios::fixed);
@@ -60,6 +61,7 @@ int main()
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
+	const int LEARNING_SPEED = 40;
 	const wstring PATH = L"C:/Digits/";
 	const string PATH_S = "C:/Digits/";
 	//Чтение файлов
@@ -123,15 +125,22 @@ int main()
 	cout << "Считать ядра и смещения с файла? (0 - нет, 1 - да)\n";
 	int check;
 	cin >> check;
-	bool needToGenerate;
+	bool needToGenerate, straightOnly;
+
 
 	switch (check)
 	{
 	case 0:
 		needToGenerate = true;
+		straightOnly = false;
+
 		break;
 	case 1:
 		needToGenerate = false;
+
+		cout << "Только прямой ход? (0 - нет, 1 - да)\n"; cin >> check;
+		straightOnly = true ? check == 1 : false;
+
 		break;
 	default:
 		cout << "Вы ввели недопустимое число";
@@ -150,7 +159,7 @@ int main()
 	}
 
 
-	const int EPOCHS = 1;
+	const int EPOCHS = 7;
 
 	vector<double> delta;
 	double prediction;
@@ -158,14 +167,17 @@ int main()
 	// Итерации обучения (прямой и обратный ход)
 	for (int epoch = 1; epoch <= EPOCHS; epoch++) {
 
-		for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) {
+		if (straightOnly && epoch > 1)
+			exit(0);
+
+		for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) { // trainingFiles.size()
 
 			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
 			cout << "(" << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
 
 			// Прямой ход
 			
-			int output_dim = 16;
+			int output_dim = 32;
 			vector<vector<vector<vector<double>>>> cores_set;
 			vector<vector<vector<double>>> biases_set;
 
@@ -213,116 +225,11 @@ int main()
 				biases_set = biases[layer_num - 1];
 			}
 
-			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, biases_set, output_dim);
+			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim);
 
-
-			//for(int i = 0; i < layer1.size();i++)
-			//	consoleOutMatrix(layer1[i]);
-
-
-			// Слой 2
-			cout << "2 LAYER" << endl;
-			layer_num += 1;
-
-			output_dim = 16;
-
-			// Генерация или чтение набора ядер
-			cores_set.clear();
-			biases_set.clear();
-			if (epoch == 1 && fileNum == 0) {
-
-				int DEPTH = layer1.size();
-
-				for (int i = 0; i < output_dim; i++) {
-					if (needToGenerate)
-					{
-						cores_set.push_back(vector<vector<vector<double>>> {});
-
-						cores_set[i] = generationCore(DEPTH, 2);
-
-						biases_set.push_back(generationBias(layer1.size(), layer1[0].size()));
-					}
-					else
-					{
-						cores_set.push_back(vector<vector<vector<double>>> {});
-
-
-						for (int j = 0; j < DEPTH; j++)
-						{
-							cores_set[i].push_back(vector<vector<double>> {});
-
-							cores_set[i][j] = readMatrixFromFile(finCores);
-						}
-
-						biases_set.push_back(readMatrixFromFile(finBiases));
-					}
-				}
-
-				cores.push_back(cores_set);
-				biases.push_back(biases_set);
-			}
-			else {
-				cores_set = cores[layer_num - 1];
-				biases_set = biases[layer_num - 1];
-			}
-
-			vector<vector<vector<double>>> layer2 = Dense(layer1, cores_set, biases_set, output_dim);
-
-
-			//for (int i = 0; i < layer2.size(); i++)
-			//	consoleOutMatrix(layer2[i]);
-
-
-
-			// Слой 3
-			cout << "3 LAYER" << endl;
-			layer_num += 1;
-
-			output_dim = 16;
-
-			// Генерация или чтение набора ядер
-			cores_set.clear();
-			biases_set.clear();
-			if (epoch == 1 && fileNum == 0) {
-				int DEPTH = layer2.size();
-
-				for (int i = 0; i < output_dim; i++) {
-					if (needToGenerate)
-					{
-						cores_set.push_back(vector<vector<vector<double>>> {});
-
-						cores_set[i] = generationCore(DEPTH, 2);
-
-						biases_set.push_back(generationBias(layer2.size(), layer2[0].size()));
-					}
-					else
-					{
-						cores_set.push_back(vector<vector<vector<double>>> {});
-
-						for (int j = 0; j < DEPTH; j++)
-						{
-							cores_set[i].push_back(vector<vector<double>> {});
-
-							cores_set[i][j] = readMatrixFromFile(finCores);
-						}
-
-						biases_set.push_back(readMatrixFromFile(finBiases));
-					}
-				}
-
-				cores.push_back(cores_set);
-				biases.push_back(biases_set);
-			}
-			else {
-				cores_set = cores[layer_num - 1];
-				biases_set = biases[layer_num - 1];
-			}
-
-			vector<vector<vector<double>>> layer3 = Dense(layer2, cores_set, biases_set, output_dim);
-
-
-			//for (int i = 0; i < layer3.size(); i++)
-			//	consoleOutMatrix(layer3[i]);
+			vector<vector<vector<double>>> layer2;
+			for (int i = 0; i < layer1.size(); i++)
+				layer2.push_back(max_pooling(layer1[i]));
 
 
 
@@ -331,9 +238,9 @@ int main()
 			vector<double> layer4;
 
 			vector<double> new_matrix;
-			for (int i = 0; i < layer3.size(); i++) {
+			for (int i = 0; i < layer2.size(); i++) {
 				// flatten
-				new_matrix = flatten(layer3[i]);
+				new_matrix = flatten(layer2[i]);
 
 				for (int k = 0; k < new_matrix.size(); k++)
 					layer4.push_back(new_matrix[k]);
@@ -346,7 +253,7 @@ int main()
 
 
 			// 5 слой (слой выхода)
-			// cout << "5 LAYER" << endl;
+			cout << "5 LAYER" << endl;
 			layer_num += 1;
 
 			output_dim = 10;
@@ -421,15 +328,68 @@ int main()
 
 			cout << "Summary loss:" << getLoss(result, getUnitaryCode(result.size(), stoi(image.getName()))) << endl << endl;
 
+			/*
 			for (int i = 0; i < delta.size(); i++)
 				cout << setprecision(6) << setw(10) << delta[i];
 			cout << endl;
+			*/
 
 			// Обратный ход
-			//
-			//
-			// Обратный ход
 
+			if (!straightOnly) {
+
+
+
+				//	5 слой
+				layer_num = layer_num;
+
+				vector<vector<double>> weights;
+
+				for (int i = 0; i < cores_set.size(); i++)
+					weights.push_back(cores_set[i][0][0]);
+
+				for (int weightJ = 0; weightJ < weights.size(); weightJ++) {
+
+					for (int weightI = 0; weightI < layer4.size(); weightI++) {
+
+						double der = getLossDerivative2D(layer4, weights, weightJ, weightI, 1 ? weightJ == stoi(image.getName()) : 0);
+						// cout << cores[layer_num - 1][weightJ][0][0][weightI] << " + " << der << endl << endl << "---------------------------------------" << endl;
+
+						cores[layer_num - 1][weightJ][0][0][weightI] += (-LEARNING_SPEED * der);
+					}
+				}
+
+				// 1 слой
+				layer_num -= 1;
+
+				vector<vector<vector<double>>> cores_;
+
+				cores_set = cores[layer_num - 1];
+
+				
+				for (int i = 0; i < cores_set.size(); i++)
+					cores_.push_back(cores_set[i][0]);
+
+				// Подсчитаем все производные
+				for(int resultNum = 0; resultNum < 10; resultNum++){
+
+					for (int weightNum = 0; weightNum < cores_.size(); weightNum++) {
+
+						for (int weightJ = 0; weightJ < cores_[0].size(); weightJ++) {
+
+							for (int weightI = 0; weightI < cores_[0][weightJ].size(); weightI++) {
+
+								double der = getLossDerivative3D(image.getImage(), cores_[weightNum], weightJ, weightI);
+
+								cout << cores[layer_num - 1][weightNum][0][weightJ][weightI] << " + " << der << endl << endl << "---------------------------------------" << endl;
+
+								cores[layer_num - 1][weightNum][0][weightJ][weightI] += (-LEARNING_SPEED * der);
+							}
+						}
+					}
+				}
+
+			}
 			
 		}
 	}
@@ -440,84 +400,54 @@ int main()
 		finCores.close();
 		finBiases.close();
 	}
-	else {
 
-		// Запись в файл
-
-		foutCores.open(pathCores);
-		foutBiases.open(pathBiases);
-		if (!foutCores.is_open() || !foutBiases.is_open())
-		{
-			cout << "Ошибка открытия файла для записи";
-			return -6;
-		}
-		foutCores.clear();
-		foutBiases.clear();
-
-		// 1 слой
-
-		int DEPTH = 1;
-		int output_dim = 16;
-		for (int i = 0; i < output_dim; i++)
-		{
-
-			for (int j = 0; j < DEPTH; j++)
-			{
-				writeMatrixInFile(foutCores, cores[0][i][j]);
-			}
-
-			writeMatrixInFile(foutBiases, biases[0][i]);
-		}
-
-		// 2 слой
-		output_dim = 16;
-
-		DEPTH = 16;
-
-		for (int i = 0; i < output_dim; i++)
-		{
-
-
-			for (int j = 0; j < DEPTH; j++)
-			{
-				writeMatrixInFile(foutCores, cores[1][i][j]);
-			}
-
-			writeMatrixInFile(foutBiases, biases[1][i]);
-		}
-
-		// 3 слой
-
-		DEPTH = 16;
-		output_dim = 16;
-
-		for (int i = 0; i < output_dim; i++)
-		{
-			for (int j = 0; j < DEPTH; j++)
-			{
-				writeMatrixInFile(foutCores, cores[2][i][j]);
-			}
-
-			writeMatrixInFile(foutBiases, biases[2][i]);
-		}
-
-
-		// 5 слой
-
-		DEPTH = 1;
-		output_dim = 10;
-		for (int i = 0; i < output_dim; i++)
-		{
-			for (int j = 0; j < DEPTH; j++)
-			{
-				writeMatrixInFile(foutCores, cores[3][i][j]);
-			}
-		}
-
-
-		foutCores.close();
-		foutBiases.close();
+	foutCores.open(pathCores);
+	foutBiases.open(pathBiases);
+	if (!foutCores.is_open() || !foutBiases.is_open())
+	{
+		cout << "Ошибка открытия файла для записи";
+		return -6;
 	}
+	foutCores.clear();
+	foutBiases.clear();
+
+	// 1 слой
+	int layerNum = 1;
+
+	int DEPTH = 1;
+	int output_dim = 32;
+	for (int i = 0; i < output_dim; i++)
+	{
+
+		for (int j = 0; j < DEPTH; j++)
+		{
+			writeMatrixInFile(foutCores, cores[layerNum-1][i][j]);
+		}
+
+		writeMatrixInFile(foutBiases, biases[layerNum - 1][i]);
+	}
+
+
+
+
+
+
+	// 5 слой
+	layerNum += 1;
+
+	DEPTH = 1;
+	output_dim = 10;
+	for (int i = 0; i < output_dim; i++)
+	{
+		for (int j = 0; j < DEPTH; j++)
+		{
+			writeMatrixInFile(foutCores, cores[layerNum - 1][i][j]);
+		}
+	}
+
+
+	foutCores.close();
+	foutBiases.close();
 
 	return 0;
 }

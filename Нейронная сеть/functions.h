@@ -1,4 +1,22 @@
 
+int max4_index(double a, double b, double c, double d) {
+	int max_i;
+
+	if (a > b && a > c && a>d) {
+		max_i = 0;
+	}
+	else if (b > a && b > c && b > d) {
+		max_i = 1;
+	}
+	else if (c > a && c > b && c > d) {
+		max_i = 2;
+	}
+	else {
+		max_i = 3;
+	}
+
+	return max_i;
+}
 
 // Максимум из 4 переменных
 double max4(double a, double b, double c, double d)

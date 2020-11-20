@@ -100,7 +100,7 @@ void testNet() {
 			for (int weightJ = 0; weightJ < weights.size(); weightJ++) {
 
 				for (int weightI = 0; weightI < layer4.size(); weightI++) {
-					double der = getLossDerivative(layer4, weights, weightJ, weightI, 1 ? weightJ == answer : 0);
+					double der = getLossDerivative2D(layer4, weights, weightJ, weightI, 1 ? weightJ == answer : 0);
 					// cout << cores[0][weightJ][0][0][weightI] << " + " << (-0.5 * der) << endl << endl << "---------------------------------------" << endl;
 
 					cores[0][weightJ][0][0][weightI] += (-1 * der);

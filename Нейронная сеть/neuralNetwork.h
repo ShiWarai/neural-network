@@ -1,3 +1,5 @@
+vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core);
+
 
 // Поэлементный максимум
 vector<vector<double>> reluFunction(vector<vector<double>> a) {
@@ -45,7 +47,7 @@ vector<vector<double>> max_pooling(vector<vector<double>> a) {
 }
 
 // Подсчёт вероятности цифр от 0 до 9 в процентах
-vector<double> softmax(vector < vector<vector<double>>> a) {
+vector<double> softmax(vector<vector<vector<double>>> a) {
 	double sum = 0;
 	vector<double> c;
 
@@ -88,8 +90,40 @@ double getLoss(vector<double> y, vector<double> solution) {
 	return  loss / (double)y.size();
 }
 
-// Получить производную от потери
-double getLossDerivative(vector<double> a, vector<vector<double>> w, int j, int i, double solution) {
+// Получить производную от потери к свёрточному слою
+double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, int j, int i) {
+
+	if (j >= w.size() || i >= w[0].size())
+		exit(0);
+
+	double der;
+
+	vector<vector<vector<double>>> layer; // 0 - слой после расширения, 1 - слой после обработки, 2 - слой после maxpooling, 3 - слой после повторного maxpooling
+
+	layer.push_back(matrixExpansion(A, w[0].size() - 1));
+
+	layer.push_back(getProcessedMatrix(vector<vector<vector<double>>> { A }, vector<vector<vector<double>>> {w}));
+
+	layer.push_back(max_pooling(layer[1]));
+
+	layer.push_back(max_pooling(layer[2]));
+
+
+
+	// x(w) = softmax(g(w)), sums(a,w)), а x'(w) = g'(w) * (sums - g(w)) / sums^2
+
+	// Вычислим производную по формуле d(y(w)) / d(w) = d(flatten(B(w)))/d(w); 
+	// B(w)x,y = maxpooling(maxpooling( C(w)x1,y1 * 4 )x,y * 4); B'(w)x,y = {1, maxI == i && maxJ == j; 0, !(maxI == i && maxJ == j)} * {1, maxI == i && maxJ == j; 0, !(maxI == i && maxJ == j)} * C'(w)x1,y1;
+	// C(w)x1,y1 = sums(w * f(x,y)); C'(w)x1,y = f(x2,y2), где x2,y2 - координаты элемента A в раширенной матрице.
+	// f(x,y) = matrixExpansion(A(x,y),w.size());
+
+
+
+	return der;
+}
+
+// Получить производную от потери к однослойному вектору
+double getLossDerivative2D(vector<double> a, vector<vector<double>> w, int j, int i, double solution) {
 
 	if (j >= w.size() || i >= w[0].size())
 		exit(0);
@@ -192,8 +226,21 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 	return reluFunction(processed_pic);
 }
 
+vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core) {
+	vector<vector<double>> bias;
+
+	for (int y = 0; y < matrix[0].size(); y++) {
+		bias.push_back(vector<double>());
+		
+		for (int x = 0; x < matrix[0][0].size(); x++)
+			bias[y].push_back(0);
+	}
+
+	return getProcessedMatrix(matrix, core, bias);
+}
+
 // Состоит из свёртки и сжатия
-vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, vector<vector<vector<double>>>  biases_set, unsigned outputLayers, bool do_max_pooling) {
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers,  vector<vector<vector<double>>> biases_set, bool do_max_pooling) {
 
 	vector<vector<vector<double>>> layer;
 
@@ -203,9 +250,16 @@ vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vecto
 	vector<vector<double>> bias;
 	for (int i = 0; i < outputLayers; i++) {
 		core = cores_set[i];
-		bias = biases_set[i];
+		
 
-		new_matrix = getProcessedMatrix(input, core, bias);
+		if (biases_set[0][0].size() != 0) {
+			bias = biases_set[i];
+
+			new_matrix = getProcessedMatrix(input, core, bias);
+		}
+		else {
+			new_matrix = getProcessedMatrix(input, core);
+		}
 
 		// Max_pooling 2x2
 		if (do_max_pooling)
