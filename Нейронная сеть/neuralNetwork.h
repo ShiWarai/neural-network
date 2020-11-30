@@ -96,7 +96,7 @@ double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, i
 	if (j >= w.size() || i >= w[0].size())
 		exit(0);
 
-	double der;
+	double der = 0;
 
 	vector<vector<vector<double>>> layer; // 0 - слой после расширения, 1 - слой после обработки, 2 - слой после maxpooling, 3 - слой после повторного maxpooling
 
@@ -109,8 +109,11 @@ double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, i
 	layer.push_back(max_pooling(layer[2]));
 
 
-
-	// x(w) = softmax(g(w)), sums(a,w)), а x'(w) = g'(w) * (sums - g(w)) / sums^2
+	// Вычислим производную по формуле d(loss(w)) / d(w) = 
+	// = (-2*b_i) / k * (solution - x(w)) * x'(w), где
+	// x(w) = softmax(g(w)), sums(a,w)), а x'(w) = g'(w) * (sums - g(w)) / sums^2;
+	// g(w) = relu(sum);
+	// g'(w) = (sum)' * { 0: sum < 0; 1: sum >= 0;
 
 	// Вычислим производную по формуле d(y(w)) / d(w) = d(flatten(B(w)))/d(w); 
 	// B(w)x,y = maxpooling(maxpooling( C(w)x1,y1 * 4 )x,y * 4); B'(w)x,y = {1, maxI == i && maxJ == j; 0, !(maxI == i && maxJ == j)} * {1, maxI == i && maxJ == j; 0, !(maxI == i && maxJ == j)} * C'(w)x1,y1;
@@ -171,7 +174,7 @@ double getLossDerivative2D(vector<double> a, vector<vector<double>> w, int j, in
 
 	double d_softmax = d_g * (sums - g) / pow(sums, 2);
 
-	return ((-2 * a[i]) / w.size()) * (solution - softmax_result) * d_softmax;
+	return ((2 * a[i]) / w.size()) * (softmax_result - solution ) * d_softmax;
 }
 
 // Получить разницу
@@ -240,7 +243,7 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 }
 
 // Состоит из свёртки и сжатия
-vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers,  vector<vector<vector<double>>> biases_set, bool do_max_pooling) {
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers,  vector<vector<vector<double>>> biases_set) {
 
 	vector<vector<vector<double>>> layer;
 
@@ -260,10 +263,6 @@ vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vecto
 		else {
 			new_matrix = getProcessedMatrix(input, core);
 		}
-
-		// Max_pooling 2x2
-		if (do_max_pooling)
-			new_matrix = max_pooling(new_matrix);
 
 		// Добавляем уже сжатый слой
 		layer.push_back(new_matrix);

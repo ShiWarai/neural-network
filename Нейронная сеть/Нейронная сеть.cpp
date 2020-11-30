@@ -19,7 +19,7 @@ using namespace BMP;
 #include "testingArea.h"
 
 vector<vector<double>> generationBias(int a, int b, double koef = 10);
-vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} }, bool do_max_pooling = true);
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} });
 
 // Программа
 int main()
@@ -61,7 +61,7 @@ int main()
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
-	const int LEARNING_SPEED = 40;
+	const int LEARNING_SPEED = 5;
 	const wstring PATH = L"C:/Digits/";
 	const string PATH_S = "C:/Digits/";
 	//Чтение файлов
@@ -90,6 +90,8 @@ int main()
 
 		trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
 		FindClose(handleFiles);
+
+		std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
 
 		cout << "\n\n";
 
@@ -173,11 +175,11 @@ int main()
 		for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) { // trainingFiles.size()
 
 			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
-			cout << "(" << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
+			cout << "(Epoch: " << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
 
 			// Прямой ход
 			
-			int output_dim = 32;
+			int output_dim = 16;
 			vector<vector<vector<vector<double>>>> cores_set;
 			vector<vector<vector<double>>> biases_set;
 
@@ -225,12 +227,23 @@ int main()
 				biases_set = biases[layer_num - 1];
 			}
 
-			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim);
+			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim, { {{}} });
 
+
+			// 2 слой
+			cout << "2 LAYER" << endl;
 			vector<vector<vector<double>>> layer2;
+
 			for (int i = 0; i < layer1.size(); i++)
 				layer2.push_back(max_pooling(layer1[i]));
 
+
+			// 3 слой
+			cout << "3 LAYER" << endl;
+			vector<vector<vector<double>>> layer3;
+
+			for (int i = 0; i < layer2.size(); i++)
+				layer3.push_back(max_pooling(layer2[i]));
 
 
 			// 4 слой
@@ -238,9 +251,9 @@ int main()
 			vector<double> layer4;
 
 			vector<double> new_matrix;
-			for (int i = 0; i < layer2.size(); i++) {
+			for (int i = 0; i < layer3.size(); i++) {
 				// flatten
-				new_matrix = flatten(layer2[i]);
+				new_matrix = flatten(layer3[i]);
 
 				for (int k = 0; k < new_matrix.size(); k++)
 					layer4.push_back(new_matrix[k]);
@@ -359,6 +372,7 @@ int main()
 					}
 				}
 
+				/*
 				// 1 слой
 				layer_num -= 1;
 
@@ -366,12 +380,12 @@ int main()
 
 				cores_set = cores[layer_num - 1];
 
-				
+
 				for (int i = 0; i < cores_set.size(); i++)
 					cores_.push_back(cores_set[i][0]);
 
 				// Подсчитаем все производные
-				for(int resultNum = 0; resultNum < 10; resultNum++){
+				for (int resultNum = 0; resultNum < 10; resultNum++) {
 
 					for (int weightNum = 0; weightNum < cores_.size(); weightNum++) {
 
@@ -388,6 +402,7 @@ int main()
 						}
 					}
 				}
+				*/
 
 			}
 			
@@ -415,7 +430,7 @@ int main()
 	int layerNum = 1;
 
 	int DEPTH = 1;
-	int output_dim = 32;
+	int output_dim = 16;
 	for (int i = 0; i < output_dim; i++)
 	{
 
@@ -426,8 +441,6 @@ int main()
 
 		writeMatrixInFile(foutBiases, biases[layerNum - 1][i]);
 	}
-
-
 
 
 
