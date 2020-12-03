@@ -61,7 +61,7 @@ int main()
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
-	const double LEARNING_SPEED = 100;
+	const double LEARNING_SPEED = 1000;
 	const wstring PATH = L"C:/Digits/";
 	const string PATH_S = "C:/Digits/";
 	//Чтение файлов
@@ -91,7 +91,7 @@ int main()
 		trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
 		FindClose(handleFiles);
 
-		//std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
+		// std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
 
 		cout << "\n\n";
 
@@ -363,6 +363,9 @@ int main()
 
 				// sums = sum(relu(a(i,j) * w(i,j)))
 				vector<vector<vector<double>>> layer_;
+				vector<double> ders_E6;
+
+				double sums = 0;
 								
 				for (int n = 0; n < weights.size(); n++) {
 					double s = 0;
@@ -372,25 +375,37 @@ int main()
 					}
 
 					layer_.push_back(vector<vector<double>> { {max(0, s)}}); // ReLu
+
+					sums += max(0, s); // relu(x*w)+relu(x*w)+...
 				}
 
+				// Расчёт изменения весов полносвязной сети (5 слой)
 				for (int weightJ = 0; weightJ < weights.size(); weightJ++) {
 
 					// sum(a,w)
 					double sum = layer_[weightJ][0][0];
 
+					double der = getLossDerivative2D(layer_, weights, weightJ, sum, sums, stoi(image.getName()));
+					ders_E6.push_back(der);
+
 					for (int weightI = 0; weightI < layer4.size(); weightI++) {
 
-						double der = getLossDerivative2D(layer_, weights, weightJ, weightI, sum, stoi(image.getName()));
-						der *= layer4[weightI];
+						double step = -LEARNING_SPEED * der * layer4[weightI];
 
 						double core_ = cores[layer_num - 1][weightJ][0][0][weightI];
 
-						// cout << " (" << weightJ << "):" << (-LEARNING_SPEED * der) << endl;
+						// cout << " (" << weightJ << "):" << step << endl;
 
-						cores[layer_num - 1][weightJ][0][0][weightI] += (-LEARNING_SPEED * der);
+						cores[layer_num - 1][weightJ][0][0][weightI] += step;
 					}
 				}
+
+				// Производные выхода flatten (4 слой)
+				vector<double> E4_x = ders_E4(weights, ders_E6);
+
+				// Обратный flatten
+				vector<vector<vector<double>>> E3_x = reverse_flatten(E4_x, 16, 4, 4);
+
 
 				/*
 				// 1 слой

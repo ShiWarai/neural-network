@@ -77,6 +77,24 @@ vector<double> flatten(vector<vector<double>> a) {
 	return b;
 }
 
+// Обратная развёртка (не является обратной flatten, ибо имеет др. размерность на выходе)
+vector<vector<vector<double>>> reverse_flatten(vector<double> a, int dim1, int dim2, int dim3) {
+	vector<vector<vector<double>>> b;
+
+	// Заполняем массив
+	for (int z = 0; z < dim1; z++) {
+		b.push_back(vector<vector<double>>{});
+		for (int y = 0; y < dim2; y++) {
+			b[z].push_back(vector<double> {});
+		}
+	}
+
+	for (int i = 0; i < a.size(); i++)
+		b[i / (dim2 * dim3)][(i % (dim2 * dim3)) / dim3].push_back(a[i]);
+
+	return b;
+}
+
 // Вычисление потерь
 double getLoss(vector<double> y, vector<double> solution) {
 	if (y.size() != solution.size())
@@ -101,12 +119,8 @@ double der_E8(vector<vector<vector<double>>> layerE6, int n, double solution) {
 }
 
 // der_E7 = d(softmax(R,A))/d(R)
-double der_E7(vector<vector<vector<double>>> layerE6, int leader_n, int n) {
+double der_E7(vector<vector<vector<double>>> layerE6, int leader_n, int n, double sums) {
 
-	double sums = 0;
-
-	for (int i = 0; i < layerE6.size(); i++)
-		sums += layerE6[i][0][0];
 
 	if (leader_n == n)
 		return (sums - layerE6[leader_n][0][0])/pow(sums,2);
@@ -117,6 +131,19 @@ double der_E7(vector<vector<vector<double>>> layerE6, int leader_n, int n) {
 // der_E6 = d(relu(x))/d(x)
 double der_E6(double x) {
 	return x ? x >= 0 : 0;
+}
+
+vector<double> ders_E4(vector<vector<double>> W, vector<double> E6_x) {
+	vector<double> ders;
+
+	double sum;
+	for (int i = 0; i < W[0].size(); i++) {
+		sum = 0;
+		for (int j = 0; j < E6_x.size(); j++)
+			sum += (W[j][i] * E6_x[j]);
+		ders.push_back(sum);
+	}
+	return ders;
 }
 
 // Получить производную от потери к свёрточному слою
@@ -155,9 +182,9 @@ double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, i
 }
 
 // Получить производную от потери к однослойному вектору
-double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<double>> w, int j, int i, double sum, int solution) {
+double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<double>> w, int j,  double sum, double sums, int solution) {
 
-	if (j >= w.size() || i >= w[0].size())
+	if ( j >= w.size() )
 		exit(0);
 
 
@@ -174,7 +201,7 @@ double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<d
 
 	// E7' 
 	for (int k = 0; k < w.size(); k++) {
-		ders[k] *= der_E7(layer, j, k);
+		ders[k] *= der_E7(layer, j, k, sums);
 	}
 
 	// E6'
