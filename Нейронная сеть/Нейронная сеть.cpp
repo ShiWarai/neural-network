@@ -61,7 +61,7 @@ int main()
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
-	const int LEARNING_SPEED = 5;
+	const double LEARNING_SPEED = 100;
 	const wstring PATH = L"C:/Digits/";
 	const string PATH_S = "C:/Digits/";
 	//Чтение файлов
@@ -91,7 +91,7 @@ int main()
 		trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
 		FindClose(handleFiles);
 
-		std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
+		//std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
 
 		cout << "\n\n";
 
@@ -352,21 +352,41 @@ int main()
 			if (!straightOnly) {
 
 
-
 				//	5 слой
 				layer_num = layer_num;
 
 				vector<vector<double>> weights;
-
 				for (int i = 0; i < cores_set.size(); i++)
 					weights.push_back(cores_set[i][0][0]);
 
+				// Расчёт локальный констант
+
+				// sums = sum(relu(a(i,j) * w(i,j)))
+				vector<vector<vector<double>>> layer_;
+								
+				for (int n = 0; n < weights.size(); n++) {
+					double s = 0;
+
+					for (int k = 0; k < weights[0].size(); k++) {
+						s += layer4[k] * weights[n][k];
+					}
+
+					layer_.push_back(vector<vector<double>> { {max(0, s)}}); // ReLu
+				}
+
 				for (int weightJ = 0; weightJ < weights.size(); weightJ++) {
+
+					// sum(a,w)
+					double sum = layer_[weightJ][0][0];
 
 					for (int weightI = 0; weightI < layer4.size(); weightI++) {
 
-						double der = getLossDerivative2D(layer4, weights, weightJ, weightI, 1 ? weightJ == stoi(image.getName()) : 0);
-						// cout << cores[layer_num - 1][weightJ][0][0][weightI] << " + " << der << endl << endl << "---------------------------------------" << endl;
+						double der = getLossDerivative2D(layer_, weights, weightJ, weightI, sum, stoi(image.getName()));
+						der *= layer4[weightI];
+
+						double core_ = cores[layer_num - 1][weightJ][0][0][weightI];
+
+						// cout << " (" << weightJ << "):" << (-LEARNING_SPEED * der) << endl;
 
 						cores[layer_num - 1][weightJ][0][0][weightI] += (-LEARNING_SPEED * der);
 					}

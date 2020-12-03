@@ -58,7 +58,7 @@ vector<double> softmax(vector<vector<vector<double>>> a) {
 		return vector<double>{NULL};
 
 	for (int i = 0; i < a.size(); i++)
-		a[i][0][0] /= sum;
+		a[i][0][0] = a[i][0][0] / sum;
 
 	for (int i = 0; i < a.size(); i++)
 		c.push_back(a[i][0][0]);
@@ -87,7 +87,36 @@ double getLoss(vector<double> y, vector<double> solution) {
 	for (int i = 0; i < y.size(); i++)
 		loss += pow(solution[i] - y[i], 2);
 
-	return  loss / (double)y.size();
+	return  loss / y.size();
+}
+
+// Далее идут функции последовательного вычисления производной
+
+// der_E8 = d(loss(R)) / d(R)
+double der_E8(vector<vector<vector<double>>> layerE6, int n, double solution) {
+	if (softmax(layerE6) == vector<double> {NULL})
+		return 0;
+
+	return -2.0 / layerE6.size() * (solution - softmax(layerE6)[n]); // layerE7 = softmax(layerE6)
+}
+
+// der_E7 = d(softmax(R,A))/d(R)
+double der_E7(vector<vector<vector<double>>> layerE6, int leader_n, int n) {
+
+	double sums = 0;
+
+	for (int i = 0; i < layerE6.size(); i++)
+		sums += layerE6[i][0][0];
+
+	if (leader_n == n)
+		return (sums - layerE6[leader_n][0][0])/pow(sums,2);
+	else
+		return -(layerE6[leader_n][0][0])/pow(sums,2);
+}
+
+// der_E6 = d(relu(x))/d(x)
+double der_E6(double x) {
+	return x ? x >= 0 : 0;
 }
 
 // Получить производную от потери к свёрточному слою
@@ -126,56 +155,41 @@ double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, i
 }
 
 // Получить производную от потери к однослойному вектору
-double getLossDerivative2D(vector<double> a, vector<vector<double>> w, int j, int i, double solution) {
+double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<double>> w, int j, int i, double sum, int solution) {
 
 	if (j >= w.size() || i >= w[0].size())
 		exit(0);
 
-	// Вычислим производную по формуле d(loss(w)) / d(w) = 
-	// = (-2*b_i) / k * (solution - x(w)) * x'(w), где
-	// x(w) = softmax(g(w)), sums(a,w)), а x'(w) = g'(w) * (sums - g(w)) / sums^2
 
-	// sum(a,w)
-	double sum = 0;
+	// Вычисление частной производной 
 
-	for (int k = 0; k < a.size(); k++)
-		sum += (w[j][k] * a[k]);
+	double der = 0;
 
-	// x(w) = softmax(sum, sums(a,w))
+	vector<double> ders;
 
-	vector<vector<vector<double>>> layer;
+	// Вычислим производные по формуле E8' = 
+	// = (-2 / k) * ((solution - Ri)
+	for (int k = 0; k < w.size(); k++)
+		ders.push_back(der_E8(layer, k, 1 ? solution == k : 0));
 
-	double sums = 0;
-	for (int n = 0; n < w.size(); n++) {
-		double s = 0;
-
-		for (int k = 0; k < w[0].size(); k++) {
-			s += a[k] * w[n][k];
-		}
-
-		layer.push_back(vector<vector<double>> { {max(0, s)}}); // ReLu
-		sums += max(0, s);
+	// E7' 
+	for (int k = 0; k < w.size(); k++) {
+		ders[k] *= der_E7(layer, j, k);
 	}
 
-	if (softmax(layer) == vector<double> {NULL})
-		return 0;
+	// E6'
+	der = der_E6(sum);
 
-	double softmax_result = softmax(layer)[j];
+	double E7_sum = 0;
+	for (int k = 0; k < w.size(); k++) {
+		E7_sum += ders[k];
+	}
+	der *= E7_sum;
 
-	// g'(w) = b_i * { 0: sum < 0; 1: sum >= 0;
-
-	double d_g = a[i] * (0 ? sum < 0 : 1);
-
-	// g(w) = relu(sum)
-
-	double g = max(sum, 0);
-
-	// x'(w) = g'(w) * (sums - g(w)) / sums^2
-
-	double d_softmax = d_g * (sums - g) / pow(sums, 2);
-
-	return ((2 * a[i]) / w.size()) * (softmax_result - solution ) * d_softmax;
+	return der;
 }
+
+
 
 // Получить разницу
 vector<double> getDelta(vector<double> a, int solution) {
@@ -299,7 +313,7 @@ vector<vector<double>> generationBias(int a, int b, double koef) {
 
 	for (int y1 = 0; y1 < a; y1++) {
 		for (int x1 = 0; x1 < b; x1++) {
-			bias[y1][x1] = -0.5 + ((double)rand() * koef / (RAND_MAX));
+			bias[y1][x1] = 1 - ((double)rand() * koef / (RAND_MAX));
 		}
 	}
 
@@ -308,5 +322,5 @@ vector<vector<double>> generationBias(int a, int b, double koef) {
 
 // Получить весы в вектор-строке
 vector<double> generationWeights(int a) {
-	return generationBias(1, a, 2)[0];
+	return generationBias(1, a, 1)[0];
 }
