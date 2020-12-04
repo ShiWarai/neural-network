@@ -13,25 +13,32 @@ vector<vector<double>> reluFunction(vector<vector<double>> a) {
 	return a;
 }
 
-// Свёртка к максимальному
-vector<vector<double>> max_pooling(vector<vector<double>> a) {
+// Свёртка к максимальному (выборка из 2x2)
+vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	vector<vector<double>> finalBuffer;
 	int currentSize = a.size();
 
+	vector<vector<double>> max_poses;
+
 	for (int y = 0; y < currentSize; y += 2) {
 		vector<double> buffer;
+		vector<double> buffer_poses;
+
 		for (int x = 0; x < currentSize; x += 2) {
 
-			double c = max4(a[y][x], a[y][x + 1], a[y + 1][x], a[y + 1][x + 1]);
+			vector <double> cs = max4(a[y][x], a[y][x + 1], a[y + 1][x], a[y + 1][x + 1]);
 
-			buffer.push_back(c);
+			buffer.push_back(cs[0]);
+			buffer_poses.push_back(cs[1]);
 
 			a[y][x] = 0;
 			a[y][x + 1] = 0;
 			a[y + 1][x] = 0;
 			a[y + 1][x + 1] = 0;
 		}
+
 		finalBuffer.push_back(buffer);
+		max_poses.push_back(buffer_poses);
 	}
 
 	/*
@@ -43,8 +50,43 @@ vector<vector<double>> max_pooling(vector<vector<double>> a) {
 		cout << endl;
 	} */
 
-	return finalBuffer;
+	return vector<vector<vector<double>>> {finalBuffer, max_poses};
 }
+
+// Операция обратная max_pooling для выборки 2x2
+vector<vector<double>> reverse_max_pooling(vector<vector<double>> a, vector<vector<double>> max_poses) {
+
+	if (a.size() != max_poses.size() || a[0].size() != max_poses[0].size())
+		return vector<vector<double>> { NULL };
+
+	int size_new_y = a.size() * 2;
+	int size_new_x = a[0].size() * 2;
+
+	vector<vector<double>> b;
+
+	for (int y = 0; y < size_new_y; y ++) {
+		b.push_back(vector<double>());
+		for (int x = 0; x < size_new_x; x ++) {
+			b[y].push_back(0);
+		}
+	}
+
+	for (int y = 0; y < size_new_y; y+=2) {
+		for (int x = 0; x < size_new_x; x+=2) {
+			if (max_poses[y / 2][x / 2] == 0)
+				b[y][x] = a[y / 2][x / 2];
+			else if (max_poses[y / 2][x / 2] == 1)
+				b[y][x + 1] = a[y / 2][x / 2];
+			else if (max_poses[y / 2][x / 2] == 2)
+				b[y + 1][x] = a[y / 2][x / 2];
+			else
+				b[y + 1][x + 1] = a[y / 2][x / 2];
+		}
+	}
+
+	return b;
+}
+
 
 // Подсчёт вероятности цифр от 0 до 9 в процентах
 vector<double> softmax(vector<vector<vector<double>>> a) {
@@ -111,7 +153,7 @@ double getLoss(vector<double> y, vector<double> solution) {
 // Далее идут функции последовательного вычисления производной
 
 // der_E8 = d(loss(R)) / d(R)
-double der_E8(vector<vector<vector<double>>> layerE6, int n, double solution) {
+double der_loss(vector<vector<vector<double>>> layerE6, int n, double solution) {
 	if (softmax(layerE6) == vector<double> {NULL})
 		return 0;
 
@@ -119,7 +161,7 @@ double der_E8(vector<vector<vector<double>>> layerE6, int n, double solution) {
 }
 
 // der_E7 = d(softmax(R,A))/d(R)
-double der_E7(vector<vector<vector<double>>> layerE6, int leader_n, int n, double sums) {
+double der_softmax(vector<vector<vector<double>>> layerE6, int leader_n, int n, double sums) {
 
 
 	if (leader_n == n)
@@ -129,10 +171,11 @@ double der_E7(vector<vector<vector<double>>> layerE6, int leader_n, int n, doubl
 }
 
 // der_E6 = d(relu(x))/d(x)
-double der_E6(double x) {
+double der_relu(double x) {
 	return x ? x >= 0 : 0;
 }
 
+// der_E4 = d(W*X*E6_x..)/dX
 vector<double> ders_E4(vector<vector<double>> W, vector<double> E6_x) {
 	vector<double> ders;
 
@@ -160,9 +203,9 @@ double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, i
 
 	layer.push_back(getProcessedMatrix(vector<vector<vector<double>>> { A }, vector<vector<vector<double>>> {w}));
 
-	layer.push_back(max_pooling(layer[1]));
+	// layer.push_back(max_pooling(layer[1]));
 
-	layer.push_back(max_pooling(layer[2]));
+	// layer.push_back(max_pooling(layer[2]));
 
 
 	// Вычислим производную по формуле d(loss(w)) / d(w) = 
@@ -197,15 +240,15 @@ double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<d
 	// Вычислим производные по формуле E8' = 
 	// = (-2 / k) * ((solution - Ri)
 	for (int k = 0; k < w.size(); k++)
-		ders.push_back(der_E8(layer, k, 1 ? solution == k : 0));
+		ders.push_back(der_loss(layer, k, 1 ? solution == k : 0));
 
 	// E7' 
 	for (int k = 0; k < w.size(); k++) {
-		ders[k] *= der_E7(layer, j, k, sums);
+		ders[k] *= der_softmax(layer, j, k, sums);
 	}
 
 	// E6'
-	der = der_E6(sum);
+	der = der_relu(sum);
 
 	double E7_sum = 0;
 	for (int k = 0; k < w.size(); k++) {
@@ -324,7 +367,7 @@ vector<vector<vector<double>>> generationCore(unsigned DEPTH, unsigned CORE_SIZE
 
 		for (int y1 = 0; y1 < CORE_SIZE; y1++) {
 			for (int x1 = 0; x1 < CORE_SIZE; x1++) {
-				core[i][y1][x1] = 1 - ((double)rand() / (RAND_MAX)) * 2;
+				core[i][y1][x1] = 1 - ((double)rand() / (RAND_MAX));
 			}
 		}
 	}

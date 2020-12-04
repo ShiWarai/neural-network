@@ -91,7 +91,7 @@ int main()
 		trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
 		FindClose(handleFiles);
 
-		// std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
+		std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
 
 		cout << "\n\n";
 
@@ -183,6 +183,9 @@ int main()
 			vector<vector<vector<vector<double>>>> cores_set;
 			vector<vector<vector<double>>> biases_set;
 
+			vector<vector<vector<vector<double>>>> max_poses = 
+				{ vector<vector<vector<double>>> {}, vector<vector<vector<double>>> {} };
+
 			// Слой 1
 
 			cout << "1 LAYER" << endl;
@@ -234,16 +237,25 @@ int main()
 			cout << "2 LAYER" << endl;
 			vector<vector<vector<double>>> layer2;
 
-			for (int i = 0; i < layer1.size(); i++)
-				layer2.push_back(max_pooling(layer1[i]));
+			for (int i = 0; i < layer1.size(); i++) {
+				vector<vector<vector<double>>> buffer = max_pooling(layer1[i]);
+
+				layer2.push_back(buffer[0]);
+				max_poses[0].push_back(buffer[1]);
+			}
 
 
 			// 3 слой
 			cout << "3 LAYER" << endl;
+
 			vector<vector<vector<double>>> layer3;
 
-			for (int i = 0; i < layer2.size(); i++)
-				layer3.push_back(max_pooling(layer2[i]));
+			for (int i = 0; i < layer2.size(); i++) {
+				vector<vector<vector<double>>> buffer = max_pooling(layer2[i]);
+
+				layer3.push_back(buffer[0]);
+				max_poses[1].push_back(buffer[1]);
+			}
 
 
 			// 4 слой
@@ -403,10 +415,31 @@ int main()
 				// Производные выхода flatten (4 слой)
 				vector<double> E4_x = ders_E4(weights, ders_E6);
 
-				// Обратный flatten
+				// Обратный flatten (итог 3 слоя)
 				vector<vector<vector<double>>> E3_x = reverse_flatten(E4_x, 16, 4, 4);
 
+				// Производная max_pooling_1 (3 слой)
+				vector<vector<vector<double>>> E2_x;
+				for (int k = 0; k < E3_x.size(); k++) {
+					E2_x.push_back(reverse_max_pooling(E3_x[k], max_poses[1][k]));
+				}
 
+				// Производная max_pooling_1 (2 слой)
+				vector<vector<vector<double>>> E1_x;
+				for (int k = 0; k < E3_x.size(); k++) {
+					E1_x.push_back(reverse_max_pooling(E2_x[k], max_poses[0][k]));
+				}
+
+				for (int k = 0; k < E1_x.size(); k++) {
+					consoleOutMatrix(E1_x[k]);
+
+					cout << endl << endl << "...................................................." << endl;
+				}
+
+
+				
+
+				NULL == NULL;
 				/*
 				// 1 слой
 				layer_num -= 1;

@@ -19,12 +19,12 @@ int max4_index(double a, double b, double c, double d) {
 }
 
 // Максимум из 4 переменных
-double max4(double a, double b, double c, double d)
+vector<double> max4(double a, double b, double c, double d)
 {
 	a = max(a, b);
 	a = max(a, c);
 	a = max(c, d);
-	return a;
+	return vector<double> {a, (double) max4_index(a, b, c, d)};
 }
 
 // Вывод матрицы в консоль
