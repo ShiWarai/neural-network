@@ -127,7 +127,7 @@ namespace BMP {
                 if (normalizationFunc != NULL)
                     picture[i].push_back(normalizationFunc((rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 256));
                 else
-                    picture[i].push_back(255 - (rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 3);
+                    picture[i].push_back((rgb[i][j].rgbRed + rgb[i][j].rgbGreen + rgb[i][j].rgbBlue) / 3);
 
             }
         }

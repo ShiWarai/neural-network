@@ -61,9 +61,9 @@ int main()
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
-	const double LEARNING_SPEED = 1000;
-	const wstring PATH = L"C:/Digits/";
-	const string PATH_S = "C:/Digits/";
+	const double LEARNING_SPEED = 500;
+	const wstring PATH = L"C:/training2/";
+	const string PATH_S = "C:/training2/";
 	//Чтение файлов
 	{
 		WIN32_FIND_DATA FindFileData;
@@ -77,7 +77,7 @@ int main()
 				{
 					wstring ws(FindFileData.cFileName);
 					string fileName(ws.begin(), ws.end());
-					string digit = fileName.substr(0, fileName.find("."));
+					string digit = fileName.substr(0, fileName.find(char(32)));
 
 					trainingFiles.push_back(vector<string> {fileName, digit});
 				}
@@ -95,28 +95,32 @@ int main()
 
 		cout << "\n\n";
 
+		/*
 		// Вывод названий и цифр
 		for (int i = 0; i < trainingFiles.size(); i++)
 			cout << "File name:" << trainingFiles[i][0] << "\nDigit:" << trainingFiles[i][1] << endl;
+		*/
 
+		/*
 		// Проверка чтения изображения
 		for (int k = 0; k < trainingFiles.size(); k++)
 		{
 
-			BMP_BW image(trainingFiles[k][1], (string)(PATH_S + trainingFiles[k][0]), true);
+			BMP_BW image(trainingFiles[k][1], (string)(PATH_S + trainingFiles[k][0]), false);
 
 			// Тестовый вывод
 
-			/*
+			
 			for (int y = PICTURE_SIZE - 1; y >= 0; y--) {
 				for (int x = 0; x < PICTURE_SIZE; x++)
 					cout << setw(3) << setprecision(3)<< image[y][x] << " ";
 				cout << endl;
 			}
-			*/
+			
 
 			cout << endl;
 		}
+		*/
 	}
 
 	// Инициализация ядер и смещения
@@ -161,7 +165,7 @@ int main()
 	}
 
 
-	const int EPOCHS = 7;
+	const int EPOCHS = 10;
 
 	vector<double> delta;
 	double prediction;
@@ -398,7 +402,7 @@ int main()
 					double sum = layer_[weightJ][0][0];
 
 					double der = getLossDerivative2D(layer_, weights, weightJ, sum, sums, stoi(image.getName()));
-					ders_E6.push_back(der);
+					// ders_E6.push_back(der);
 
 					for (int weightI = 0; weightI < layer4.size(); weightI++) {
 
@@ -411,6 +415,21 @@ int main()
 						cores[layer_num - 1][weightJ][0][0][weightI] += step;
 					}
 				}
+				
+				/*
+				weights.clear();
+				for (int i = 0; i < cores_set.size(); i++)
+					weights.push_back(cores_set[i][0][0]);
+
+				for (int weightJ = 0; weightJ < weights.size(); weightJ++) {
+
+					double sum = layer_[weightJ][0][0];
+
+					double der = getLossDerivative2D(layer_, weights, weightJ, sum, sums, stoi(image.getName()));
+					ders_E6.push_back(der);
+
+				}
+				*/
 
 				// Производные выхода flatten (4 слой)
 				vector<double> E4_x = ders_E4(weights, ders_E6);
@@ -430,16 +449,25 @@ int main()
 					E1_x.push_back(reverse_max_pooling(E2_x[k], max_poses[0][k]));
 				}
 
-				for (int k = 0; k < E1_x.size(); k++) {
-					consoleOutMatrix(E1_x[k]);
+				// Нахождение производных для ядер
+				vector<vector<vector<double>>> ders_E1 = ders_cores(image.getImage(), E1_x);
 
-					cout << endl << endl << "...................................................." << endl;
+				layer_num -= 1;
+				for (int k = 0; k < ders_E1.size(); k++) {
+
+					for (int y = 0; y < ders_E1[0].size(); y++) {
+						for (int x = 0; x < ders_E1[0][0].size(); x++) {
+
+							// Корректируем ядра
+							cores[layer_num - 1][k][0][y][x] -= 50 * ders_E1[k][y][x];
+
+
+						}
+
+					}
+
 				}
 
-
-				
-
-				NULL == NULL;
 				/*
 				// 1 слой
 				layer_num -= 1;

@@ -172,7 +172,7 @@ double der_softmax(vector<vector<vector<double>>> layerE6, int leader_n, int n, 
 
 // der_E6 = d(relu(x))/d(x)
 double der_relu(double x) {
-	return x ? x >= 0 : 0;
+	return x ? x > 0 : (0.0001 + (double)rand() / RAND_MAX * 0.0004 );
 }
 
 // der_E4 = d(W*X*E6_x..)/dX
@@ -188,6 +188,43 @@ vector<double> ders_E4(vector<vector<double>> W, vector<double> E6_x) {
 	}
 	return ders;
 }
+
+
+// Обратная свёртка (производные для ядер 2x2)
+vector<vector<vector<double>>> ders_cores(vector<vector<double>> input, vector<vector<vector<double>>> ders_E1) {
+
+	const unsigned core_size = 2;
+	const unsigned y_size = input.size();
+	const unsigned x_size = input[0].size();
+
+	vector<vector<vector<double>>> ders_cores_; // Производные ядер
+	unsigned outputLayers = ders_E1.size();
+
+	int panding_ = (int)ceil((double)(core_size - 1) / 2); // Определяем начало гл. массива
+	vector<vector<double>> flat = matrixExpansion(input, panding_); // Получаем расширенную матрицу плоскости
+
+		for (int k = 0; k < outputLayers; k++) {
+		vector<vector<double>> der_core = createFilledVector(core_size, core_size);
+
+			for (int y = 0; y < y_size; y++) {
+				for (int x = 0; x < x_size; x++) {
+
+					// Производим умножение производной следующего слоя на текущее значение X
+
+					der_core[0][0] += flat[y + panding_ - 1][x + panding_ - 1] * ders_E1[k][y][x];
+					der_core[0][1] += flat[y + panding_ - 1][x + panding_] * ders_E1[k][y][x];
+					der_core[1][0] += flat [y + panding_] [x + panding_ - 1] * ders_E1[k][y][x];
+					der_core[1][1] += flat[y + panding_][x + panding_] * ders_E1[k][y][x];
+
+				}
+			}		
+
+		ders_cores_.push_back(der_core);
+	}
+
+	return ders_cores_;
+}
+
 
 // Получить производную от потери к свёрточному слою
 double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, int j, int i) {
