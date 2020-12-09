@@ -172,7 +172,7 @@ double der_softmax(vector<vector<vector<double>>> layerE6, int leader_n, int n, 
 
 // der_E6 = d(relu(x))/d(x)
 double der_relu(double x) {
-	return x ? x > 0 : (0.0001 + (double)rand() / RAND_MAX * 0.0004 );
+	return x ? x > 0 : (0);
 }
 
 // der_E4 = d(W*X*E6_x..)/dX

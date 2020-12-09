@@ -32,38 +32,13 @@ int main()
 	ifstream finCores, finBiases;
 	ofstream foutCores, foutBiases;
 	string pathCores = "cores.dat", pathBiases = "biases.dat";
-
-
-	// Тестовый полигон
-	/*testNet();
-	vector<vector<double>> matrix;
-	vector<double> v;
-	v.push_back(1.2);
-	v.push_back(1.7);
-	v.push_back(2.5);
-	v.push_back(9.5);
-	v.push_back(5.7);
-	matrix.push_back(v);
-	v.clear();
-	v.push_back(2.4);
-	v.push_back(5.9);
-	v.push_back(3.8);
-	v.push_back(8.6);
-	v.push_back(5.0);
-	matrix.push_back(v);
-	writeMatrixInFile(matrix,"cores.txt");
-	writeMatrixInFile(matrix,"cores.txt");
-	matrix = readMatrixFromFile("cores.txt");
-	consoleOutMatrix(matrix);
-	exit(1);*/
-
 	
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
-	const double LEARNING_SPEED = 500;
-	const wstring PATH = L"C:/training2/";
-	const string PATH_S = "C:/training2/";
+	const double LEARNING_SPEED = 1000;
+	const wstring PATH = L"C:/Digits/";
+	const string PATH_S = "C:/Digits/";
 	//Чтение файлов
 	{
 		WIN32_FIND_DATA FindFileData;
@@ -236,7 +211,7 @@ int main()
 
 			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim, { {{}} });
 
-
+			/*
 			// 2 слой
 			cout << "2 LAYER" << endl;
 			vector<vector<vector<double>>> layer2;
@@ -247,6 +222,7 @@ int main()
 				layer2.push_back(buffer[0]);
 				max_poses[0].push_back(buffer[1]);
 			}
+			*/
 
 
 			// 3 слой
@@ -254,11 +230,11 @@ int main()
 
 			vector<vector<vector<double>>> layer3;
 
-			for (int i = 0; i < layer2.size(); i++) {
-				vector<vector<vector<double>>> buffer = max_pooling(layer2[i]);
+			for (int i = 0; i < layer1.size(); i++) {
+				vector<vector<vector<double>>> buffer = max_pooling(layer1[i]);
 
 				layer3.push_back(buffer[0]);
-				max_poses[1].push_back(buffer[1]);
+				max_poses[0].push_back(buffer[1]);
 			}
 
 
@@ -435,19 +411,14 @@ int main()
 				vector<double> E4_x = ders_E4(weights, ders_E6);
 
 				// Обратный flatten (итог 3 слоя)
-				vector<vector<vector<double>>> E3_x = reverse_flatten(E4_x, 16, 4, 4);
+				vector<vector<vector<double>>> E3_x = reverse_flatten(E4_x, 16, 8, 8);
 
 				// Производная max_pooling_1 (3 слой)
-				vector<vector<vector<double>>> E2_x;
-				for (int k = 0; k < E3_x.size(); k++) {
-					E2_x.push_back(reverse_max_pooling(E3_x[k], max_poses[1][k]));
-				}
-
-				// Производная max_pooling_1 (2 слой)
 				vector<vector<vector<double>>> E1_x;
 				for (int k = 0; k < E3_x.size(); k++) {
-					E1_x.push_back(reverse_max_pooling(E2_x[k], max_poses[0][k]));
+					E1_x.push_back(reverse_max_pooling(E3_x[k], max_poses[0][k]));
 				}
+
 
 				// Нахождение производных для ядер
 				vector<vector<vector<double>>> ders_E1 = ders_cores(image.getImage(), E1_x);
@@ -459,7 +430,7 @@ int main()
 						for (int x = 0; x < ders_E1[0][0].size(); x++) {
 
 							// Корректируем ядра
-							cores[layer_num - 1][k][0][y][x] -= 50 * ders_E1[k][y][x];
+							cores[layer_num - 1][k][0][y][x] -= 1000 * ders_E1[k][y][x];
 
 
 						}
@@ -467,38 +438,6 @@ int main()
 					}
 
 				}
-
-				/*
-				// 1 слой
-				layer_num -= 1;
-
-				vector<vector<vector<double>>> cores_;
-
-				cores_set = cores[layer_num - 1];
-
-
-				for (int i = 0; i < cores_set.size(); i++)
-					cores_.push_back(cores_set[i][0]);
-
-				// Подсчитаем все производные
-				for (int resultNum = 0; resultNum < 10; resultNum++) {
-
-					for (int weightNum = 0; weightNum < cores_.size(); weightNum++) {
-
-						for (int weightJ = 0; weightJ < cores_[0].size(); weightJ++) {
-
-							for (int weightI = 0; weightI < cores_[0][weightJ].size(); weightI++) {
-
-								double der = getLossDerivative3D(image.getImage(), cores_[weightNum], weightJ, weightI);
-
-								cout << cores[layer_num - 1][weightNum][0][weightJ][weightI] << " + " << der << endl << endl << "---------------------------------------" << endl;
-
-								cores[layer_num - 1][weightNum][0][weightJ][weightI] += (-LEARNING_SPEED * der);
-							}
-						}
-					}
-				}
-				*/
 
 			}
 			
