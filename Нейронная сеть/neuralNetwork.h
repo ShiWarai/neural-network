@@ -225,42 +225,6 @@ vector<vector<vector<double>>> ders_cores(vector<vector<double>> input, vector<v
 	return ders_cores_;
 }
 
-
-// ѕолучить производную от потери к свЄрточному слою
-double getLossDerivative3D(vector<vector<double>> A, vector<vector<double>> w, int j, int i) {
-
-	if (j >= w.size() || i >= w[0].size())
-		exit(0);
-
-	double der = 0;
-
-	vector<vector<vector<double>>> layer; // 0 - слой после расширени€, 1 - слой после обработки, 2 - слой после maxpooling, 3 - слой после повторного maxpooling
-
-	layer.push_back(matrixExpansion(A, w[0].size() - 1));
-
-	layer.push_back(getProcessedMatrix(vector<vector<vector<double>>> { A }, vector<vector<vector<double>>> {w}));
-
-	// layer.push_back(max_pooling(layer[1]));
-
-	// layer.push_back(max_pooling(layer[2]));
-
-
-	// ¬ычислим производную по формуле d(loss(w)) / d(w) = 
-	// = (-2*b_i) / k * (solution - x(w)) * x'(w), где
-	// x(w) = softmax(g(w)), sums(a,w)), а x'(w) = g'(w) * (sums - g(w)) / sums^2;
-	// g(w) = relu(sum);
-	// g'(w) = (sum)' * { 0: sum < 0; 1: sum >= 0;
-
-	// ¬ычислим производную по формуле d(y(w)) / d(w) = d(flatten(B(w)))/d(w); 
-	// B(w)x,y = maxpooling(maxpooling( C(w)x1,y1 * 4 )x,y * 4); B'(w)x,y = {1, maxI == i && maxJ == j; 0, !(maxI == i && maxJ == j)} * {1, maxI == i && maxJ == j; 0, !(maxI == i && maxJ == j)} * C'(w)x1,y1;
-	// C(w)x1,y1 = sums(w * f(x,y)); C'(w)x1,y = f(x2,y2), где x2,y2 - координаты элемента A в раширенной матрице.
-	// f(x,y) = matrixExpansion(A(x,y),w.size());
-
-
-
-	return der;
-}
-
 // ѕолучить производную от потери к однослойному вектору
 double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<double>> w, int j,  double sum, double sums, int solution) {
 

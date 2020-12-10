@@ -37,8 +37,8 @@ int main()
 
 	const unsigned int PICTURE_SIZE = 16;
 	const double LEARNING_SPEED = 200;
-	const wstring PATH = L"C:/Digits/";
-	const string PATH_S = "C:/Digits/";
+	const wstring PATH = L"C:/UserDraw/";
+	const string PATH_S = "C:/UserDraw/";
 	//Чтение файлов
 	{
 		WIN32_FIND_DATA FindFileData;
@@ -140,10 +140,14 @@ int main()
 	}
 
 
-	const int EPOCHS = 1;
+	const int EPOCHS = 2;
+	const int filesCount = 300;
 
 	vector<double> delta;
 	double prediction;
+
+	int win = 0;
+	int all = 0;
 
 	// Итерации обучения (прямой и обратный ход)
 	for (int epoch = 1; epoch <= EPOCHS; epoch++) {
@@ -151,7 +155,7 @@ int main()
 		if (straightOnly && epoch > 1)
 			exit(0);
 
-		for (int fileNum = 0; fileNum < trainingFiles.size(); fileNum++) { // trainingFiles.size()
+		for (int fileNum = 0; (fileNum < trainingFiles.size()) && (fileNum < filesCount); fileNum++) { // trainingFiles.size()
 
 			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
 			cout << "(Epoch: " << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
@@ -333,11 +337,9 @@ int main()
 
 			cout << "Summary loss:" << getLoss(result, getUnitaryCode(result.size(), stoi(image.getName()))) << endl << endl;
 
-			/*
-			for (int i = 0; i < delta.size(); i++)
-				cout << setprecision(6) << setw(10) << delta[i];
-			cout << endl;
-			*/
+
+			win += (1 ? stoi(image.getName()) == prediction : 0);
+			all += 1;
 
 			// Обратный ход
 
@@ -441,8 +443,11 @@ int main()
 
 			}
 			
+			cout << "Правильно: " << ((double)win / (double)all) * 100.0 << "%" << endl;
+
 		}
 	}
+
 
 
 	if (!needToGenerate)
