@@ -36,7 +36,7 @@ int main()
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
-	const double LEARNING_SPEED = 1000;
+	const double LEARNING_SPEED = 200;
 	const wstring PATH = L"C:/Digits/";
 	const string PATH_S = "C:/Digits/";
 	//Чтение файлов
@@ -140,7 +140,7 @@ int main()
 	}
 
 
-	const int EPOCHS = 10;
+	const int EPOCHS = 1;
 
 	vector<double> delta;
 	double prediction;
