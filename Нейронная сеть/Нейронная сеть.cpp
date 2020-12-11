@@ -18,7 +18,7 @@ using namespace BMP;
 #include "neural_IO.h"
 #include "testingArea.h"
 
-vector<vector<double>> generationBias(int a, int b, double koef = 10);
+//vector<vector<double>> generationBias(int a, int b, double koef = 10);
 vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} });
 
 // Программа
@@ -29,16 +29,16 @@ int main()
 	setlocale(LC_ALL, "ru");
 	// cout.setf(ios::fixed);
 
-	ifstream finCores, finBiases;
-	ofstream foutCores, foutBiases;
-	string pathCores = "cores.dat", pathBiases = "biases.dat";
+	ifstream finCores/*, finBiases*/;
+	ofstream foutCores/*, foutBiases*/;
+	string pathCores = "cores.dat"/*, pathBiases = "biases.dat"*/;
 	
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
 	const double LEARNING_SPEED = 200;
-	const wstring PATH = L"C:/UserDraw/";
-	const string PATH_S = "C:/UserDraw/";
+	const wstring PATH = L"C:/DigitsCheck/";
+	const string PATH_S = "C:/DigitsCheck/";
 	//Чтение файлов
 	{
 		WIN32_FIND_DATA FindFileData;
@@ -100,7 +100,7 @@ int main()
 
 	// Инициализация ядер и смещения
 	vector<vector<vector<vector<vector<double>>>>> cores;
-	vector<vector<vector<vector<double>>>> biases;
+	//vector<vector<vector<vector<double>>>> biases;
 
 
 	cout << "Считать ядра и смещения с файла? (0 - нет, 1 - да)\n";
@@ -131,8 +131,8 @@ int main()
 
 	if (!needToGenerate) {
 		finCores.open(pathCores);
-		finBiases.open(pathBiases);
-		if (!finCores.is_open() || !finBiases.is_open())
+		//finBiases.open(pathBiases);
+		if (!finCores.is_open()/* || !finBiases.is_open()*/)
 		{
 			cout << "Ошибка открытия файла для чтения";
 			return -5;
@@ -140,8 +140,8 @@ int main()
 	}
 
 
-	const int EPOCHS = 2;
-	const int filesCount = 300;
+	const int EPOCHS = 3;
+	const int filesCount = 400;
 
 	vector<double> delta;
 	double prediction;
@@ -164,7 +164,7 @@ int main()
 			
 			int output_dim = 16;
 			vector<vector<vector<vector<double>>>> cores_set;
-			vector<vector<vector<double>>> biases_set;
+			//vector<vector<vector<double>>> biases_set;
 
 			vector<vector<vector<vector<double>>>> max_poses = 
 				{ vector<vector<vector<double>>> {}, vector<vector<vector<double>>> {} };
@@ -186,7 +186,7 @@ int main()
 						cores_set.push_back(vector<vector<vector<double>>> {});
 						cores_set[i] = generationCore(DEPTH, CORE_SIZE);
 
-						biases_set.push_back(generationBias(image.getHeight(), image.getWidth()));
+						//biases_set.push_back(generationBias(image.getHeight(), image.getWidth()));
 					}
 					else
 					{						
@@ -199,18 +199,18 @@ int main()
 							cores_set[i][j] = readMatrixFromFile(finCores);
 						}
 
-						biases_set.push_back(readMatrixFromFile(finBiases));
+						//biases_set.push_back(readMatrixFromFile(finBiases));
 					}
 					
 				}
 
 				cores.push_back(cores_set);
-				biases.push_back(biases_set);
+				//biases.push_back(biases_set);
 			}
 			else
 			{
 				cores_set = cores[layer_num - 1];
-				biases_set = biases[layer_num - 1];
+				//biases_set = biases[layer_num - 1];
 			}
 
 			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim, { {{}} });
@@ -267,7 +267,7 @@ int main()
 
 			output_dim = 10;
 			cores_set.clear();
-			biases_set.clear();
+			//biases_set.clear();
 
 			// Генерация или чтение набора ядер
 			if (epoch == 1 && fileNum == 0) {
@@ -453,18 +453,18 @@ int main()
 	if (!needToGenerate)
 	{
 		finCores.close();
-		finBiases.close();
+		//finBiases.close();
 	}
 
 	foutCores.open(pathCores);
-	foutBiases.open(pathBiases);
-	if (!foutCores.is_open() || !foutBiases.is_open())
+	//foutBiases.open(pathBiases);
+	if (!foutCores.is_open()/* || !foutBiases.is_open()*/)
 	{
 		cout << "Ошибка открытия файла для записи";
 		return -6;
 	}
 	foutCores.clear();
-	foutBiases.clear();
+	//foutBiases.clear();
 
 	// 1 слой
 	int layerNum = 1;
@@ -479,7 +479,7 @@ int main()
 			writeMatrixInFile(foutCores, cores[layerNum-1][i][j]);
 		}
 
-		writeMatrixInFile(foutBiases, biases[layerNum - 1][i]);
+		//writeMatrixInFile(foutBiases, biases[layerNum - 1][i]);
 	}
 
 
@@ -500,7 +500,7 @@ int main()
 
 
 	foutCores.close();
-	foutBiases.close();
+	//foutBiases.close();
 
 	return 0;
 }
