@@ -1,3 +1,4 @@
+#include <algorithm>
 
 int max4_index(double a, double b, double c, double d) {
 	int max_i;
@@ -18,16 +19,16 @@ int max4_index(double a, double b, double c, double d) {
 	return max_i;
 }
 
-// Максимум из 4 переменных
+// ???????? ?? 4 ??????????
 vector<double> max4(double a, double b, double c, double d)
 {
-	a = max(a, b);
-	a = max(a, c);
-	a = max(c, d);
+	a = std::max(a, b);
+	a = std::max(a, c);
+	a = std::max(a, d);
 	return vector<double> {a, (double) max4_index(a, b, c, d)};
 }
 
-// Вывод матрицы в консоль
+// ????? ??????? ? ???????
 void consoleOutMatrix(vector<vector<double>> a) {
 	for (int y = 0; y < a.size(); y++) {
 		for (int x = 0; x < a[0].size(); x++)

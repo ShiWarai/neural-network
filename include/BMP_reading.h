@@ -79,8 +79,12 @@ namespace BMP {
         std::vector<std::vector<double>> picture;
 
         FILE* pFile = fopen(pictureName.c_str(), "rb");
+        if (!pFile) {
+            std::vector<std::vector<double>> empty;
+            return empty;
+        }
 
-        // считываем заголовок файла
+        // СЃС‡РёС‚С‹РІР°РµРј Р·Р°РіРѕР»РѕРІРѕРє С„Р°Р№Р»Р°
         BITMAPFILEHEADER header;
 
         header.bfType = read_u16(pFile);
@@ -89,7 +93,7 @@ namespace BMP {
         header.bfReserved2 = read_u16(pFile);
         header.bfOffBits = read_u32(pFile);
 
-        // считываем заголовок изображения
+        // СЃС‡РёС‚С‹РІР°РµРј Р·Р°РіРѕР»РѕРІРѕРє РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
         BITMAPINFOHEADER bmiHeader;
 
         bmiHeader.biSize = read_u32(pFile);
@@ -104,14 +108,21 @@ namespace BMP {
         bmiHeader.biClrUsed = read_u32(pFile);
         bmiHeader.biClrImportant = read_u32(pFile);
 
+        // Р—Р°С‰РёС‚Р° РѕС‚ РЅРµРєРѕСЂСЂРµРєС‚РЅС‹С… СЂР°Р·РјРµСЂРѕРІ (РїСЂРµРґРѕС‚РІСЂР°С‰Р°РµС‚ OOM)
+        if (bmiHeader.biWidth <= 0 || bmiHeader.biHeight <= 0 ||
+            bmiHeader.biWidth > 1024 || bmiHeader.biHeight > 1024) {
+            fclose(pFile);
+            std::vector<std::vector<double>> empty;
+            return empty;
+        }
 
-        // Создание пустого массива
+        // РЎРѕР·РґР°РЅРёРµ РїСѓСЃС‚РѕРіРѕ РјР°СЃСЃРёРІР°
         RGBQUAD** rgb = new RGBQUAD * [bmiHeader.biWidth];
         for (int i = 0; i < bmiHeader.biWidth; i++) {
             rgb[i] = new RGBQUAD[bmiHeader.biHeight];
         }
 
-        // Чтение цветов (BGR)
+        // Р§С‚РµРЅРёРµ С†РІРµС‚РѕРІ (BGR)
         for (int i = 0; i < bmiHeader.biWidth; i++) {
             for (int j = 0; j < bmiHeader.biHeight; j++) {
                 rgb[i][j].rgbBlue = getc(pFile);
@@ -120,7 +131,7 @@ namespace BMP {
             }
         }
 
-        // Выводим результат
+        // Р’С‹РІРѕРґРёРј СЂРµР·СѓР»СЊС‚Р°С‚
         for (int i = 0; i < bmiHeader.biWidth; i++) {
             picture.push_back(std::vector<double>());
             for (int j = 0; j < bmiHeader.biHeight; j++) {
@@ -131,9 +142,13 @@ namespace BMP {
 
             }
         }
-        fclose(pFile);
 
-        
+        // РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РїР°РјСЏС‚Рё
+        for (int i = 0; i < bmiHeader.biWidth; i++)
+            delete[] rgb[i];
+        delete[] rgb;
+
+        fclose(pFile);
         return picture;
     }
 

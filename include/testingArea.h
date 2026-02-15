@@ -1,6 +1,6 @@
 
 void testNet() {
-	// Инициализация ядер и смещения
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЏРґРµСЂ Рё СЃРјРµС‰РµРЅРёСЏ
 	vector<vector<vector<vector<vector<double>>>>> cores;
 	vector<vector<vector<vector<double>>>> biases;
 
@@ -11,12 +11,12 @@ void testNet() {
 	vector<double> delta;
 	double prediction;
 
-	// Итерации обучения (прямой и обратный ход)
+	// РС‚РµСЂР°С†РёРё РѕР±СѓС‡РµРЅРёСЏ (РїСЂСЏРјРѕР№ Рё РѕР±СЂР°С‚РЅС‹Р№ С…РѕРґ)
 	for (int epoch = 1; epoch <= epochs; epoch++) {
 
 		for (int fileNum = 0; fileNum < data.size(); fileNum++) {
 
-			// Прямой ход
+			// РџСЂСЏРјРѕР№ С…РѕРґ
 
 			vector<double> layer4 = data[fileNum][0];
 
@@ -25,16 +25,16 @@ void testNet() {
 			int layer_num = 1;
 			int output_dim = 2;
 
-			cout << "Ожидаемо: " << answer << endl;
+			cout << "РћР¶РёРґР°РµРјРѕ: " << answer << endl;
 
-			// Генерация или чтение набора ядер и смещения
+			// Р“РµРЅРµСЂР°С†РёСЏ РёР»Рё С‡С‚РµРЅРёРµ РЅР°Р±РѕСЂР° СЏРґРµСЂ Рё СЃРјРµС‰РµРЅРёСЏ
 			vector<vector<vector<vector<double>>>> cores_set;
 			vector<vector<vector<double>>> biases_set;
 
 			cores_set.clear();
 			biases_set.clear();
 
-			// Генерация или чтение набора ядер
+			// Р“РµРЅРµСЂР°С†РёСЏ РёР»Рё С‡С‚РµРЅРёРµ РЅР°Р±РѕСЂР° СЏРґРµСЂ
 			if (epoch == 1 && fileNum == 0) {
 
 				for (int i = 0; i < output_dim; i++) {
@@ -58,7 +58,7 @@ void testNet() {
 					sum += layer4[k] * cores_set[i][0][0][k];
 				}
 
-				layer5.push_back(vector<vector<double>> { {max(0, sum)}}); // ReLu
+				layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}}); // ReLu
 			}
 
 			cout << endl << "Result:" << endl;
@@ -66,10 +66,10 @@ void testNet() {
 				cout << layer5[x][0][0] << endl;
 			cout << endl;
 
-			// Просчёт вероятностей
+			// РџСЂРѕСЃС‡С‘С‚ РІРµСЂРѕСЏС‚РЅРѕСЃС‚РµР№
 			auto result = softmax(layer5);
 
-			// Итоговое предсказание
+			// РС‚РѕРіРѕРІРѕРµ РїСЂРµРґСЃРєР°Р·Р°РЅРёРµ
 			int prediction = 0;
 
 			double maxProc = result[0];
@@ -90,7 +90,7 @@ void testNet() {
 				cout << setprecision(6) << setw(10) << delta[i];
 			cout << endl;
 
-			// Обратный ход
+			// РћР±СЂР°С‚РЅС‹Р№ С…РѕРґ
 
 			vector<vector<double>> weights;
 
@@ -112,7 +112,7 @@ void testNet() {
 	int success = 0;
 	int failure = 0;
 
-	// Вывод результатов:
+	// Р’С‹РІРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ:
 
 	data = { {{0,0,0,0,0,0,1,0},{1}},{{0,1,0,0,0,0,0,0},{0}},{{0,0,0,0,0,1,0,0},{1}},{{1,0,0,0,0,0,0,0},{0}},{{0,0,0,0,0,0,0,1},{1}},{{0,0,1,0,0,0,0,0},{0}}, };
 
@@ -120,7 +120,7 @@ void testNet() {
 
 	for (int fileNum = 0; fileNum < data.size(); fileNum++) {
 
-		// Прямой ход
+		// РџСЂСЏРјРѕР№ С…РѕРґ
 
 		vector<double> layer4 = data[fileNum][0];
 
@@ -129,9 +129,9 @@ void testNet() {
 		int layer_num = 1;
 		int output_dim = 2;
 
-		cout << "Ожидаемо: " << answer << endl;
+		cout << "РћР¶РёРґР°РµРјРѕ: " << answer << endl;
 
-		// Генерация или чтение набора ядер и смещения
+		// Р“РµРЅРµСЂР°С†РёСЏ РёР»Рё С‡С‚РµРЅРёРµ РЅР°Р±РѕСЂР° СЏРґРµСЂ Рё СЃРјРµС‰РµРЅРёСЏ
 		vector<vector<vector<vector<double>>>> cores_set;
 		vector<vector<vector<double>>> biases_set;
 
@@ -149,7 +149,7 @@ void testNet() {
 				sum += layer4[k] * cores_set[i][0][0][k];
 			}
 
-			layer5.push_back(vector<vector<double>> { {max(0, sum)}}); // ReLu
+			layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}}); // ReLu
 		}
 
 		cout << endl << "Result:" << endl;
@@ -157,10 +157,10 @@ void testNet() {
 			cout << layer5[x][0][0] << endl;
 		cout << endl;
 
-		// Просчёт вероятностей
+		// РџСЂРѕСЃС‡С‘С‚ РІРµСЂРѕСЏС‚РЅРѕСЃС‚РµР№
 		auto result = softmax(layer5);
 
-		// Итоговое предсказание
+		// РС‚РѕРіРѕРІРѕРµ РїСЂРµРґСЃРєР°Р·Р°РЅРёРµ
 		int prediction = 0;
 
 		double maxProc = result[0];

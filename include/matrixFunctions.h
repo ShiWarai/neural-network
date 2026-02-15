@@ -1,4 +1,4 @@
-// Создание нулевой матрицы Y x X
+// РЎРѕР·РґР°РЅРёРµ РЅСѓР»РµРІРѕР№ РјР°С‚СЂРёС†С‹ Y x X
 vector<vector<double>> createFilledVector(int y, int x) {
 	vector<vector<double>> c;
 
@@ -11,7 +11,7 @@ vector<vector<double>> createFilledVector(int y, int x) {
 	return c;
 }
 
-// Вырезка из matrix прямоуголника AxB с координат y0, x0 (Добавить защиту!!!)
+// Р’С‹СЂРµР·РєР° РёР· matrix РїСЂСЏРјРѕСѓРіРѕР»РЅРёРєР° AxB СЃ РєРѕРѕСЂРґРёРЅР°С‚ y0, x0 (Р”РѕР±Р°РІРёС‚СЊ Р·Р°С‰РёС‚Сѓ!!!)
 vector<vector<double>> matrixSlicer(vector<vector<double>> matrix, unsigned y0, unsigned x0, unsigned a, unsigned b) {
 	auto processed_matrix = createFilledVector(a, b);
 
@@ -24,11 +24,11 @@ vector<vector<double>> matrixSlicer(vector<vector<double>> matrix, unsigned y0, 
 	return processed_matrix;
 }
 
-// a * b = c (поэлементное произведение)
+// a * b = c (РїРѕСЌР»РµРјРµРЅС‚РЅРѕРµ РїСЂРѕРёР·РІРµРґРµРЅРёРµ)
 vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
 
 	if ((a.size() != b.size()) && (a[0].size() != b[0].size())) {
-		cout << "Размеры массивов не совпадают" << endl;
+		cout << "Р Р°Р·РјРµСЂС‹ РјР°СЃСЃРёРІРѕРІ РЅРµ СЃРѕРІРїР°РґР°СЋС‚" << endl;
 		exit(-1);
 	}
 
@@ -44,11 +44,11 @@ vector<vector<double>> dot(vector<vector<double>> a, vector<vector<double>> b) {
 }
 
 
-// a + b = c (поэлементное сложение)
+// a + b = c (РїРѕСЌР»РµРјРµРЅС‚РЅРѕРµ СЃР»РѕР¶РµРЅРёРµ)
 vector<vector<double>> sumElements(vector<vector<double>> a, vector<vector<double>> b) {
 
 	if ((a.size() != b.size()) && (a[0].size() != b[0].size())) {
-		cout << "Размеры массивов не совпадают" << endl;
+		cout << "Р Р°Р·РјРµСЂС‹ РјР°СЃСЃРёРІРѕРІ РЅРµ СЃРѕРІРїР°РґР°СЋС‚" << endl;
 		exit(-1);
 	}
 
@@ -64,7 +64,7 @@ vector<vector<double>> sumElements(vector<vector<double>> a, vector<vector<doubl
 }
 
 
-// Сумма всех элементов
+// РЎСѓРјРјР° РІСЃРµС… СЌР»РµРјРµРЅС‚РѕРІ
 double elementsSum(vector<vector<double>> a) {
 	double sum = 0;
 	for (int y1 = 0; y1 < a.size(); y1++) {
@@ -77,25 +77,25 @@ double elementsSum(vector<vector<double>> a) {
 }
 
 
-// Получение расширенной матрицы
+// РџРѕР»СѓС‡РµРЅРёРµ СЂР°СЃС€РёСЂРµРЅРЅРѕР№ РјР°С‚СЂРёС†С‹
 vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned padding) {
 
 	auto new_matrix = createFilledVector(matrix.size() + padding, matrix[0].size() + padding);
-	int max_panding_1 = (int)ceil((double)padding / 2); // Северо-запад
-	int max_panding_2 = (int)floor((double)padding / 2); //Юго-восток
+	int max_panding_1 = (int)ceil((double)padding / 2); // РЎРµРІРµСЂРѕ-Р·Р°РїР°Рґ
+	int max_panding_2 = (int)floor((double)padding / 2); //Р®РіРѕ-РІРѕСЃС‚РѕРє
 
 	int currentX, currentY;
 
-	// Заполнение расширения
+	// Р—Р°РїРѕР»РЅРµРЅРёРµ СЂР°СЃС€РёСЂРµРЅРёСЏ
 	for (int padd_ = 1; padd_ <= padding; padd_++) {
 
-		// Вычисляем отступ
+		// Р’С‹С‡РёСЃР»СЏРµРј РѕС‚СЃС‚СѓРї
 		int panding = (int)ceil((double)padd_ / 2) - 1;
 
-		// Для северо-запада
+		// Р”Р»СЏ СЃРµРІРµСЂРѕ-Р·Р°РїР°РґР°
 		if (padd_ % 2 == 1)
 		{
-			// Север
+			// РЎРµРІРµСЂ
 
 			currentY = 0 + panding;
 
@@ -112,7 +112,7 @@ vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned p
 				}
 			}
 
-			// Запад
+			// Р—Р°РїР°Рґ
 
 			currentX = 0 + panding;
 
@@ -130,10 +130,10 @@ vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned p
 			}
 
 		}
-		// Для юго-востока
+		// Р”Р»СЏ СЋРіРѕ-РІРѕСЃС‚РѕРєР°
 		else
 		{
-			// Юг
+			// Р®Рі
 			currentY = new_matrix.size() - 1 - panding;
 
 			for (int x = 0; x < new_matrix[0].size(); x++) {
@@ -149,7 +149,7 @@ vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned p
 				}
 			}
 
-			// Восток
+			// Р’РѕСЃС‚РѕРє
 			currentX = new_matrix[0].size() - 1 - panding;
 
 			for (int y = 0; y < new_matrix.size(); y++) {
@@ -168,7 +168,7 @@ vector<vector<double>> matrixExpansion(vector<vector<double>> matrix, unsigned p
 
 	}
 
-	// Заполнение центра
+	// Р—Р°РїРѕР»РЅРµРЅРёРµ С†РµРЅС‚СЂР°
 	for (int y = 0; y < matrix.size(); y++) {
 		for (int x = 0; x < matrix[0].size(); x++) {
 			new_matrix[y + max_panding_1][x + max_panding_1] = matrix[y][x];

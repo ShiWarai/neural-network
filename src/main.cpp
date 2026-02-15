@@ -1,13 +1,15 @@
-﻿#include <iostream>
+#include <iostream>
 #include <fstream>
 #include <string>
-#include <Windows.h>
 #include <vector>
 #include <iomanip>
 #include <cmath>
 #include <random>
-#include <time.h>
+#include <ctime>
+#include <filesystem>
 #include "BMP_reading.h"
+
+namespace fs = std::filesystem;
 
 using namespace std;
 using namespace BMP;
@@ -22,8 +24,19 @@ using namespace BMP;
 vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} });
 
 // Программа
-int main()
+// Использование: neural_network [путь_к_данным] [путь_к_cores] [путь_к_biases]
+//   путь_к_данным — папка с BMP (по умолчанию: data/)
+//   путь_к_cores  — файл весов (по умолчанию: cores.dat)
+//   путь_к_biases — файл смещений (по умолчанию: biases.dat)
+int main(int argc, char* argv[])
 {
+	const string DATA_PATH = (argc >= 2) ? string(argv[1]) : "data/";
+	const string pathCores = (argc >= 3) ? string(argv[2]) : "cores.dat";
+	const string pathBiases = (argc >= 4) ? string(argv[3]) : "biases.dat";
+
+	string pathData = DATA_PATH;
+	if (!pathData.empty() && pathData.back() != '/' && pathData.back() != '\\')
+		pathData += '/';
 
 	srand(abs(rand() - time(NULL)) * 100);
 	setlocale(LC_ALL, "ru");
@@ -31,40 +44,25 @@ int main()
 
 	ifstream finCores/*, finBiases*/;
 	ofstream foutCores/*, foutBiases*/;
-	string pathCores = "cores.dat"/*, pathBiases = "biases.dat"*/;
 	
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
 	const double LEARNING_SPEED = 200;
-	const wstring PATH = L"C:/DigitsCheck/";
-	const string PATH_S = "C:/DigitsCheck/";
-	//Чтение файлов
+	const string PATH_S = pathData;
+	// Чтение файлов
 	{
-		WIN32_FIND_DATA FindFileData;
-		HANDLE handleFiles = FindFirstFileW((PATH + L"*").c_str(), &FindFileData);
-
-		if (handleFiles != INVALID_HANDLE_VALUE)
+		if (fs::exists(pathData) && fs::is_directory(pathData))
 		{
-			while (true)
+			for (const auto& entry : fs::directory_iterator(pathData))
 			{
-				if (FindNextFileW(handleFiles, &FindFileData) != NULL)
-				{
-					wstring ws(FindFileData.cFileName);
-					string fileName(ws.begin(), ws.end());
-					string digit = fileName.substr(0, fileName.find(char(32)));
-
-					trainingFiles.push_back(vector<string> {fileName, digit});
-				}
-				else
-				{
-					break;
-				}
+				if (!entry.is_regular_file()) continue;
+				string fileName = entry.path().filename().string();
+				if (fileName == "." || fileName == "..") continue;
+				string digit = fileName.substr(0, fileName.find(char(32)));
+				trainingFiles.push_back(vector<string>{fileName, digit});
 			}
 		}
-
-		trainingFiles.erase(trainingFiles.begin()); // Удаляем скрытый файл ".."
-		FindClose(handleFiles);
 
 		std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
 
@@ -139,8 +137,13 @@ int main()
 		}
 	}
 
+	int EPOCHS = 3;
+	if (!straightOnly) {
+		cout << "Число эпох обучения? (по умолчанию 3)\n";
+		cin >> EPOCHS;
+		if (EPOCHS < 1) EPOCHS = 3;
+	}
 
-	const int EPOCHS = 3;
 	const int filesCount = 400;
 
 	vector<double> delta;
@@ -309,7 +312,7 @@ int main()
 					sum += layer4[k] * cores_set[i][0][0][k];
 				}
 
-				layer5.push_back(vector<vector<double>> { {max(0, sum)}}); // ReLu
+				layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}}); // ReLu
 			}
 
 			// Просчёт вероятностей
@@ -368,9 +371,9 @@ int main()
 						s += layer4[k] * weights[n][k];
 					}
 
-					layer_.push_back(vector<vector<double>> { {max(0, s)}}); // ReLu
+					layer_.push_back(vector<vector<double>> { {std::max(0.0, s)}}); // ReLu
 
-					sums += max(0, s); // relu(x*w)+relu(x*w)+...
+					sums += std::max(0.0, s); // relu(x*w)+relu(x*w)+...
 				}
 
 				// Расчёт изменения весов полносвязной сети (5 слой)
