@@ -28,7 +28,7 @@ using namespace BMP;
 #include "testingArea.hpp"
 
 //vector<vector<double>> generationBias(int a, int b, double koef = 10);
-vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} });
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> weights_set, unsigned outputLayers, vector<vector<vector<double>>> biases_set = { {{}} });
 
 // Структура для накопления градиентов (2 обучаемых слоя)
 struct Gradients {
@@ -36,9 +36,9 @@ struct Gradients {
 	vector<vector<vector<vector<double>>>> layer2;  // 10 x 1 x 1 x layer4_size
 };
 
-void initGradients(Gradients& g, const vector<vector<vector<vector<vector<double>>>>>& cores) {
-	g.layer1 = cores[0];
-	g.layer2 = cores[1];
+void initGradients(Gradients& g, const vector<vector<vector<vector<vector<double>>>>>& weights) {
+	g.layer1 = weights[0];
+	g.layer2 = weights[1];
 	const size_t n1 = g.layer1.size();
 	for (size_t i = 0; i < n1; i++) {
 		const size_t n2 = g.layer1[i].size();
@@ -108,48 +108,46 @@ void logProgress(mutex& log_mutex, bool isInference,
 	     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
 }
 
-void applyGradients(vector<vector<vector<vector<vector<double>>>>>& cores,
+void applyGradients(vector<vector<vector<vector<vector<double>>>>>& weights,
 	const Gradients& grads, double lr, int batchSize) {
 	if (batchSize < 1) return;
 	const double scale = lr / batchSize;
-	const size_t n1 = cores[0].size();
+	const size_t n1 = weights[0].size();
 	for (size_t i = 0; i < n1; i++) {
-		const size_t n2 = cores[0][i].size();
+		const size_t n2 = weights[0][i].size();
 		for (size_t j = 0; j < n2; j++) {
-			const size_t n3 = cores[0][i][j].size();
+			const size_t n3 = weights[0][i][j].size();
 			for (size_t y = 0; y < n3; y++) {
-				const size_t n4 = cores[0][i][j][y].size();
+				const size_t n4 = weights[0][i][j][y].size();
 				for (size_t x = 0; x < n4; x++)
-					cores[0][i][j][y][x] -= scale * grads.layer1[i][j][y][x];
+					weights[0][i][j][y][x] -= scale * grads.layer1[i][j][y][x];
 			}
 		}
 	}
-	const size_t m1 = cores[1].size();
+	const size_t m1 = weights[1].size();
 	for (size_t i = 0; i < m1; i++) {
-		const size_t m2 = cores[1][i].size();
+		const size_t m2 = weights[1][i].size();
 		for (size_t j = 0; j < m2; j++) {
-			const size_t m3 = cores[1][i][j].size();
+			const size_t m3 = weights[1][i][j].size();
 			for (size_t y = 0; y < m3; y++) {
-				const size_t m4 = cores[1][i][j][y].size();
+				const size_t m4 = weights[1][i][j][y].size();
 				for (size_t x = 0; x < m4; x++)
-					cores[1][i][j][y][x] -= scale * grads.layer2[i][j][y][x];
+					weights[1][i][j][y][x] -= scale * grads.layer2[i][j][y][x];
 			}
 		}
 	}
 }
 
 // Программа
-// Использование: neural_network [путь_к_данным] [путь_к_cores] [путь_к_biases] [потоки]
+// Использование: neural_network [путь_к_данным] [путь_к_весам] [потоки]
 //   путь_к_данным — папка с BMP (по умолчанию: data/)
-//   путь_к_cores  — файл весов (по умолчанию: cores.dat)
-//   путь_к_biases — файл смещений (по умолчанию: biases.dat)
+//   путь_к_весам  — файл весов (по умолчанию: weights.dat)
 //   потоки        — число потоков (по умолчанию: 1)
 int main(int argc, char* argv[])
 {
 	const string DATA_PATH = (argc >= 2) ? string(argv[1]) : "data/";
-	const string pathCores = (argc >= 3) ? string(argv[2]) : "cores.dat";
-	const string pathBiases = (argc >= 4) ? string(argv[3]) : "biases.dat";
-	int numThreads = (argc >= 5) ? atoi(argv[4]) : 1;
+	const string pathWeights = (argc >= 3) ? string(argv[2]) : "weights.dat";
+	int numThreads = (argc >= 4) ? atoi(argv[3]) : 1;
 	if (numThreads < 1) numThreads = 1;
 
 	string pathData = DATA_PATH;
@@ -160,13 +158,13 @@ int main(int argc, char* argv[])
 	setlocale(LC_ALL, "ru");
 	// cout.setf(ios::fixed);
 
-	ifstream finCores/*, finBiases*/;
-	ofstream foutCores/*, foutBiases*/;
+	ifstream finWeights;
+	ofstream foutWeights;
 	
 	static vector<vector<string>> trainingFiles;
 
 	constexpr unsigned int PICTURE_SIZE = 16;
-	constexpr unsigned int CORE_SIZE = 3;
+	constexpr unsigned int KERNEL_SIZE = 3;
 	constexpr int OUTPUT_DIM1 = 16;
 	constexpr int OUTPUT_DIM2 = 10;
 	constexpr int FLATTEN_DIM1 = 16;
@@ -223,12 +221,11 @@ int main(int argc, char* argv[])
 		*/
 	}
 
-	// Инициализация ядер и смещения
-	vector<vector<vector<vector<vector<double>>>>> cores;
-	//vector<vector<vector<vector<double>>>> biases;
+	// Инициализация весов
+	vector<vector<vector<vector<vector<double>>>>> weights;
 
 
-	cout << "Считать ядра и смещения с файла? (0 - нет, 1 - да)\n";
+	cout << "Считать веса с файла? (0 - нет, 1 - да)\n";
 	int check;
 	cin >> check;
 	bool needToGenerate, straightOnly;
@@ -258,9 +255,8 @@ int main(int argc, char* argv[])
 	cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
 	if (!needToGenerate) {
-		finCores.open(pathCores);
-		//finBiases.open(pathBiases);
-		if (!finCores.is_open()/* || !finBiases.is_open()*/)
+		finWeights.open(pathWeights);
+		if (!finWeights.is_open())
 		{
 			cout << "Ошибка открытия файла для чтения";
 			return -5;
@@ -313,7 +309,7 @@ int main(int argc, char* argv[])
 			BMP_BW image(trainingFiles[fileNum][1], fullPaths[fileNum], false);
 
 			int output_dim = OUTPUT_DIM1;
-			vector<vector<vector<vector<double>>>> cores_set;
+			vector<vector<vector<vector<double>>>> weights_set;
 			vector<vector<vector<vector<double>>>> max_poses = { vector<vector<vector<double>>> {}, vector<vector<vector<double>>> {} };
 			unsigned layer_num = 1;
 
@@ -321,21 +317,21 @@ int main(int argc, char* argv[])
 				int DEPTH = 1;
 				for (int i = 0; i < output_dim; i++) {
 					if (needToGenerate)
-						cores_set.push_back(generationCore(DEPTH, CORE_SIZE));
+						weights_set.push_back(generationKernel(DEPTH, KERNEL_SIZE));
 					else {
-						cores_set.push_back(vector<vector<vector<double>>> {});
+						weights_set.push_back(vector<vector<vector<double>>> {});
 						for (int j = 0; j < DEPTH; j++) {
-							cores_set[i].push_back(vector<vector<double>> {});
-							cores_set[i][j] = readMatrixFromFile(finCores);
+							weights_set[i].push_back(vector<vector<double>> {});
+							weights_set[i][j] = readMatrixFromFile(finWeights);
 						}
 					}
 				}
-				cores.push_back(cores_set);
+				weights.push_back(weights_set);
 			} else {
-				cores_set = cores[layer_num - 1];
+				weights_set = weights[layer_num - 1];
 			}
 
-			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim, { {{}} });
+			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, weights_set, output_dim, { {{}} });
 			vector<vector<vector<double>>> layer3;
 			layer3.reserve(OUTPUT_DIM1);
 			for (size_t i = 0; i < layer1.size(); i++) {
@@ -353,22 +349,22 @@ int main(int argc, char* argv[])
 
 			layer_num += 1;
 			output_dim = OUTPUT_DIM2;
-			cores_set.clear();
+			weights_set.clear();
 			if (epoch == 1 && fileNum == 0) {
 				for (int i = 0; i < output_dim; i++) {
 					if (needToGenerate)
-						cores_set.push_back(vector<vector<vector<double>>> { { generationWeights(FLATTEN_SIZE) } });
+						weights_set.push_back(vector<vector<vector<double>>> { { generationWeights(FLATTEN_SIZE) } });
 					else {
-						cores_set.push_back(vector<vector<vector<double>>> {});
+						weights_set.push_back(vector<vector<vector<double>>> {});
 						for (int j = 0; j < 1; j++) {
-							cores_set[i].push_back(vector<vector<double>> {});
-							cores_set[i][j] = readMatrixFromFile(finCores);
+							weights_set[i].push_back(vector<vector<double>> {});
+							weights_set[i][j] = readMatrixFromFile(finWeights);
 						}
 					}
 				}
-				cores.push_back(cores_set);
+				weights.push_back(weights_set);
 			} else {
-				cores_set = cores[layer_num - 1];
+				weights_set = weights[layer_num - 1];
 			}
 
 			vector<vector<vector<double>>> layer5;
@@ -376,7 +372,7 @@ int main(int argc, char* argv[])
 			const size_t n_layer4 = layer4.size();
 			for (int i = 0; i < output_dim; i++) {
 				double sum = 0;
-				for (size_t k = 0; k < n_layer4; k++) sum += layer4[k] * cores_set[i][0][0][k];
+				for (size_t k = 0; k < n_layer4; k++) sum += layer4[k] * weights_set[i][0][0][k];
 				layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}});
 			}
 
@@ -408,7 +404,7 @@ int main(int argc, char* argv[])
 			BMP_BW image(trainingFiles[fileNum][1], fullPaths[fileNum], false);
 
 			int output_dim = OUTPUT_DIM1;
-			vector<vector<vector<vector<double>>>> cores_set;
+			vector<vector<vector<vector<double>>>> weights_set;
 			vector<vector<vector<vector<double>>>> max_poses = { vector<vector<vector<double>>> {}, vector<vector<vector<double>>> {} };
 			unsigned layer_num = 1;
 
@@ -416,21 +412,21 @@ int main(int argc, char* argv[])
 				int DEPTH = 1;
 				for (int i = 0; i < output_dim; i++) {
 					if (needToGenerate)
-						cores_set.push_back(generationCore(DEPTH, CORE_SIZE));
+						weights_set.push_back(generationKernel(DEPTH, KERNEL_SIZE));
 					else {
-						cores_set.push_back(vector<vector<vector<double>>> {});
+						weights_set.push_back(vector<vector<vector<double>>> {});
 						for (int j = 0; j < DEPTH; j++) {
-							cores_set[i].push_back(vector<vector<double>> {});
-							cores_set[i][j] = readMatrixFromFile(finCores);
+							weights_set[i].push_back(vector<vector<double>> {});
+							weights_set[i][j] = readMatrixFromFile(finWeights);
 						}
 					}
 				}
-				cores.push_back(cores_set);
+				weights.push_back(weights_set);
 			} else {
-				cores_set = cores[layer_num - 1];
+				weights_set = weights[layer_num - 1];
 			}
 
-			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim, { {{}} });
+			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, weights_set, output_dim, { {{}} });
 			vector<vector<vector<double>>> layer3;
 			layer3.reserve(OUTPUT_DIM1);
 			for (size_t i = 0; i < layer1.size(); i++) {
@@ -448,22 +444,22 @@ int main(int argc, char* argv[])
 
 			layer_num += 1;
 			output_dim = OUTPUT_DIM2;
-			cores_set.clear();
+			weights_set.clear();
 			if (epoch == 1 && fileNum == 0) {
 				for (int i = 0; i < output_dim; i++) {
 					if (needToGenerate)
-						cores_set.push_back(vector<vector<vector<double>>> { { generationWeights(FLATTEN_SIZE) } });
+						weights_set.push_back(vector<vector<vector<double>>> { { generationWeights(FLATTEN_SIZE) } });
 					else {
-						cores_set.push_back(vector<vector<vector<double>>> {});
+						weights_set.push_back(vector<vector<vector<double>>> {});
 						for (int j = 0; j < 1; j++) {
-							cores_set[i].push_back(vector<vector<double>> {});
-							cores_set[i][j] = readMatrixFromFile(finCores);
+							weights_set[i].push_back(vector<vector<double>> {});
+							weights_set[i][j] = readMatrixFromFile(finWeights);
 						}
 					}
 				}
-				cores.push_back(cores_set);
+				weights.push_back(weights_set);
 			} else {
-				cores_set = cores[layer_num - 1];
+				weights_set = weights[layer_num - 1];
 			}
 
 			vector<vector<vector<double>>> layer5;
@@ -471,7 +467,7 @@ int main(int argc, char* argv[])
 			const size_t n_layer4_c = layer4.size();
 			for (int i = 0; i < output_dim; i++) {
 				double sum = 0;
-				for (size_t k = 0; k < n_layer4_c; k++) sum += layer4[k] * cores_set[i][0][0][k];
+				for (size_t k = 0; k < n_layer4_c; k++) sum += layer4[k] * weights_set[i][0][0][k];
 				layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}});
 			}
 
@@ -485,12 +481,12 @@ int main(int argc, char* argv[])
 
 			// Обратный ход — накопление градиентов
 			if (grad_out.layer1.empty())
-				initGradients(grad_out, cores);
+				initGradients(grad_out, weights);
 
 			vector<vector<double>> weights;
 			weights.reserve(OUTPUT_DIM2);
-			for (size_t i = 0; i < cores_set.size(); i++)
-				weights.push_back(cores_set[i][0][0]);
+			for (size_t i = 0; i < weights_set.size(); i++)
+				weights.push_back(weights_set[i][0][0]);
 
 			vector<vector<vector<double>>> layer_;
 			vector<double> ders_E6;
@@ -523,7 +519,7 @@ int main(int argc, char* argv[])
 			for (size_t k = 0; k < E3_x.size(); k++)
 				E1_x.push_back(reverse_max_pooling(E3_x[k], max_poses[0][k]));
 
-			vector<vector<vector<double>>> ders_E1 = ders_cores(image.getImage(), E1_x, CORE_SIZE);
+			vector<vector<vector<double>>> ders_E1 = ders_weights(image.getImage(), E1_x, KERNEL_SIZE);
 			layer_num -= 1;
 
 			for (size_t k = 0; k < ders_E1.size(); k++) {
@@ -561,7 +557,7 @@ int main(int argc, char* argv[])
 			for (int f = 0; f < filesCount; f++) {
 				Gradients g;
 				auto [loss, correct, prediction] = computeGradientsForFile(f, g);
-				applyGradients(cores, g, LEARNING_SPEED, 1);
+				applyGradients(weights, g, LEARNING_SPEED, 1);
 
 				win_atomic += correct;
 				all_atomic += 1;
@@ -591,15 +587,15 @@ int main(int argc, char* argv[])
 					auto [loss, correct, _] = computeGradientsForFile(0, g0);
 					batchLossSum += loss;
 					batchCorrect += correct;
-					initGradients(grad_accum, cores);
+					initGradients(grad_accum, weights);
 					addGradient(grad_accum, g0);
 				} else {
-					initGradients(grad_accum, cores);
+					initGradients(grad_accum, weights);
 				}
 
 				vector<Gradients> threadGrads(numThreads);
 				for (int t = 0; t < numThreads; t++)
-					initGradients(threadGrads[t], cores);
+					initGradients(threadGrads[t], weights);
 
 				atomic<int> nextFile{batchStart == 0 && epoch == 1 ? 1 : batchStart};
 				vector<thread> threads;
@@ -622,7 +618,7 @@ int main(int argc, char* argv[])
 					addGradient(grad_accum, threadGrads[t]);
 
 				// Linear scaling rule: lr *= batch_size для эквивалентности online SGD
-				applyGradients(cores, grad_accum, LEARNING_SPEED * actualBatchSize, actualBatchSize);
+				applyGradients(weights, grad_accum, LEARNING_SPEED * actualBatchSize, actualBatchSize);
 
 				win_atomic += batchCorrect;
 				all_atomic += actualBatchSize;
@@ -644,19 +640,16 @@ int main(int argc, char* argv[])
 
 	if (!needToGenerate)
 	{
-		finCores.close();
-		//finBiases.close();
+		finWeights.close();
 	}
 
-	foutCores.open(pathCores);
-	//foutBiases.open(pathBiases);
-	if (!foutCores.is_open()/* || !foutBiases.is_open()*/)
+	foutWeights.open(pathWeights);
+	if (!foutWeights.is_open())
 	{
 		cout << "Ошибка открытия файла для записи";
 		return -6;
 	}
-	foutCores.clear();
-	//foutBiases.clear();
+	foutWeights.clear();
 
 	// 1 слой
 	int layerNum = 1;
@@ -668,10 +661,9 @@ int main(int argc, char* argv[])
 
 		for (int j = 0; j < DEPTH; j++)
 		{
-			writeMatrixInFile(foutCores, cores[layerNum-1][i][j]);
+			writeMatrixInFile(foutWeights, weights[layerNum-1][i][j]);
 		}
 
-		//writeMatrixInFile(foutBiases, biases[layerNum - 1][i]);
 	}
 
 
@@ -686,13 +678,12 @@ int main(int argc, char* argv[])
 	{
 		for (int j = 0; j < DEPTH; j++)
 		{
-			writeMatrixInFile(foutCores, cores[layerNum - 1][i][j]);
+			writeMatrixInFile(foutWeights, weights[layerNum - 1][i][j]);
 		}
 	}
 
 
-	foutCores.close();
-	//foutBiases.close();
+	foutWeights.close();
 
 	return 0;
 }

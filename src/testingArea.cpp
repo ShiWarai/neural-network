@@ -8,8 +8,7 @@ using namespace std;
 
 void testNet() {
 	// Инициализация данных и переменных…
-	vector<vector<vector<vector<vector<double>>>>> cores;
-	vector<vector<vector<vector<double>>>> biases;
+	vector<vector<vector<vector<vector<double>>>>> weights;
 
 	vector<vector<vector<double>>> data{ {{0,0,1,0,0,0,0,0},{0}},{{0,0,0,0,0,0,1,0},{1}}, {{0,0,0,0,0,0,0,1},{1}}, {{0,0,0,0,1,0,0,0},{1}}, {{1,0,0,0,0,0,0,0},{0}}, {{0,0,0,1,0,0,0,0},{0}},{{0,1,0,0,0,0,0,0},{0}},{{0,0,0,0,0,1,0,0},{1}}, {{0,0,0,0,0,1,0,0},{1}}, {{0,1,0,0,0,0,0,0},{0}},{{0,0,0,0,0,0,0,1},{1}},{{1,0,0,0,0,0,0,0},{0}},{{1,0,0,0,0,0,0,0},{0}},{{0,0,0,0,0,1,0,0},{1}},{{0,0,0,0,1,0,0,0},{1}},{{0,0,1,0,0,0,0,0},{0}} };
 
@@ -34,26 +33,23 @@ void testNet() {
 
 			cout << "Ожидаемо: " << answer << endl;
 
-			// Генерация или чтение набора ядер и смещений
-			vector<vector<vector<vector<double>>>> cores_set;
-			vector<vector<vector<double>>> biases_set;
-
-			cores_set.clear();
-			biases_set.clear();
-
 			// Генерация или чтение набора ядер
+			vector<vector<vector<vector<double>>>> weights_set;
+
+			weights_set.clear();
+
 			if (epoch == 1 && fileNum == 0) {
 
 				for (int i = 0; i < output_dim; i++) {
-					cores_set.push_back(vector<vector<vector<double>>> {});
+					weights_set.push_back(vector<vector<vector<double>>> {});
 
-					cores_set[i].push_back(vector<vector<double>> { generationWeights(layer4.size()) });
+					weights_set[i].push_back(vector<vector<double>> { generationWeights(layer4.size()) });
 				}
 
-				cores.push_back(cores_set);
+				weights.push_back(weights_set);
 			}
 			else {
-				cores_set = cores[layer_num - 1];
+				weights_set = weights[layer_num - 1];
 			}
 
 			vector<vector<vector<double>>> layer5;
@@ -62,7 +58,7 @@ void testNet() {
 				double sum = 0;
 
 				for (int k = 0; k < layer4.size(); k++) {
-					sum += layer4[k] * cores_set[i][0][0][k];
+					sum += layer4[k] * weights_set[i][0][0][k];
 				}
 
 				layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}}); // ReLu
@@ -101,16 +97,16 @@ void testNet() {
 
 			vector<vector<double>> weights;
 
-			for (int i = 0; i < cores_set.size(); i++)
-				weights.push_back(cores_set[i][0][0]);
+			for (int i = 0; i < weights_set.size(); i++)
+				weights.push_back(weights_set[i][0][0]);
 
 			for (int weightJ = 0; weightJ < weights.size(); weightJ++) {
 
 				for (int weightI = 0; weightI < layer4.size(); weightI++) {
 					// double der = getLossDerivative2D(layer4, weights, weightJ, weightI, 1 ? weightJ == answer : 0);
-					// cout << cores[0][weightJ][0][0][weightI] << " + " << (-0.5 * der) << endl << endl << "---------------------------------------" << endl;
+					// cout << weights[0][weightJ][0][0][weightI] << " + " << (-0.5 * der) << endl << endl << "---------------------------------------" << endl;
 
-					// cores[0][weightJ][0][0][weightI] += (-1 * der);
+					// weights[0][weightJ][0][0][weightI] += (-1 * der);
 				}
 			}
 		}
@@ -139,13 +135,10 @@ void testNet() {
 		cout << "Ожидаемо: " << answer << endl;
 
 		// Генерация или чтение набора ядер
-		vector<vector<vector<vector<double>>>> cores_set;
-		vector<vector<vector<double>>> biases_set;
+		vector<vector<vector<vector<double>>>> weights_set;
 
-		cores_set.clear();
-		biases_set.clear();
-
-		cores_set = cores[layer_num - 1];
+		weights_set.clear();
+		weights_set = weights[layer_num - 1];
 
 		vector<vector<vector<double>>> layer5;
 
@@ -153,7 +146,7 @@ void testNet() {
 			double sum = 0;
 
 			for (int k = 0; k < layer4.size(); k++) {
-				sum += layer4[k] * cores_set[i][0][0][k];
+				sum += layer4[k] * weights_set[i][0][0][k];
 			}
 
 			layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}}); // ReLu

@@ -184,34 +184,34 @@ double der_relu(double x) {
 
 
 // Производные ядра (свёрточные ядра 2x2 и 3x3)
-[[nodiscard]] vector<vector<vector<double>>> ders_cores(vector<vector<double>> input, vector<vector<vector<double>>> ders_E1, unsigned core_size) {
+[[nodiscard]] vector<vector<vector<double>>> ders_weights(vector<vector<double>> input, vector<vector<vector<double>>> ders_E1, unsigned kernel_size) {
 
 	const unsigned y_size = input.size();
 	const unsigned x_size = input[0].size();
 
-	vector<vector<vector<double>>> ders_cores_;
+	vector<vector<vector<double>>> ders_result;
 	unsigned outputLayers = ders_E1.size();
 
-	int panding_ = (int)ceil((double)(core_size - 1) / 2);
-	vector<vector<double>> flat = matrixExpansion(input, core_size - 1);
+	int panding_ = (int)ceil((double)(kernel_size - 1) / 2);
+	vector<vector<double>> flat = matrixExpansion(input, kernel_size - 1);
 
 	for (int k = 0; k < outputLayers; k++) {
-		vector<vector<double>> der_core = createFilledVector(core_size, core_size);
+		vector<vector<double>> der_kernel = createFilledVector(kernel_size, kernel_size);
 
 		for (int y = 0; y < y_size; y++) {
 			for (int x = 0; x < x_size; x++) {
-				for (unsigned i = 0; i < core_size; i++) {
-					for (unsigned j = 0; j < core_size; j++) {
-						der_core[i][j] += flat[y + i][x + j] * ders_E1[k][y][x];
+				for (unsigned i = 0; i < kernel_size; i++) {
+					for (unsigned j = 0; j < kernel_size; j++) {
+						der_kernel[i][j] += flat[y + i][x + j] * ders_E1[k][y][x];
 					}
 				}
 			}
 		}
 
-		ders_cores_.push_back(der_core);
+		ders_result.push_back(der_kernel);
 	}
 
-	return ders_cores_;
+	return ders_result;
 }
 
 // Производная по весу в полносвязном слое
@@ -260,9 +260,9 @@ vector<double> getDelta(vector<double> a, int solution) {
 }
 
 // Обработка матрицы с ядром и смещением
-vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core, vector<vector<double>> bias) {
+vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> kernel, vector<vector<double>> bias) {
 
-	if (core.size() != matrix.size())
+	if (kernel.size() != matrix.size())
 		exit(0);
 
 	unsigned y_size = matrix[0].size();
@@ -272,19 +272,19 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 	auto processed_pic = createFilledVector(y_size, x_size);
 
 	int dimensions = matrix.size();
-	int panding_ = (int)ceil((double)(core.size() - 1) / 2); // padding для свёртки
+	int panding_ = (int)ceil((double)(kernel.size() - 1) / 2); // padding для свёртки
 
 	vector<vector<double>> flat;
 	for (int dim = 0; dim < dimensions; dim++) {
 
 		// Расширение матрицы
-		flat = matrixExpansion(matrix[dim], core[0].size() - 1);
+		flat = matrixExpansion(matrix[dim], kernel[0].size() - 1);
 
 		for (int y = 0; y < y_size; y++) {
 			for (int x = 0; x < x_size; x++) {
 
-				auto slice = matrixSlicer(flat, y, x, core[dim].size(), core[dim][0].size());
-				slice = dot(slice, core[dim]);
+				auto slice = matrixSlicer(flat, y, x, kernel[dim].size(), kernel[dim][0].size());
+				slice = dot(slice, kernel[dim]);
 
 				processed_pic[y][x] += elementsSum(slice);
 			}
@@ -296,7 +296,7 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 	return reluFunction(processed_pic);
 }
 
-vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core) {
+vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> kernel) {
 	vector<vector<double>> bias;
 
 	for (int y = 0; y < matrix[0].size(); y++) {
@@ -306,29 +306,29 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 			bias[y].push_back(0);
 	}
 
-	return getProcessedMatrix(matrix, core, bias);
+	return getProcessedMatrix(matrix, kernel, bias);
 }
 
 // Полносвязный слой сети (Dense)
-vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers,  vector<vector<vector<double>>> biases_set) {
+vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> weights_set, unsigned outputLayers,  vector<vector<vector<double>>> biases_set) {
 
 	vector<vector<vector<double>>> layer;
 
 	vector<vector<double>> new_matrix;
 
-	vector<vector<vector<double>>> core;
+	vector<vector<vector<double>>> kernel;
 	vector<vector<double>> bias;
 	for (int i = 0; i < outputLayers; i++) {
-		core = cores_set[i];
+		kernel = weights_set[i];
 
 
 		if (biases_set[0][0].size() != 0) {
 			bias = biases_set[i];
 
-			new_matrix = getProcessedMatrix(input, core, bias);
+			new_matrix = getProcessedMatrix(input, kernel, bias);
 		}
 		else {
-			new_matrix = getProcessedMatrix(input, core);
+			new_matrix = getProcessedMatrix(input, kernel);
 		}
 
 		layer.push_back(new_matrix);
@@ -338,23 +338,23 @@ vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vecto
 }
 
 // Генерация ядра свёртки
-vector<vector<vector<double>>> generationCore(unsigned DEPTH, unsigned CORE_SIZE) {
-	vector<vector<vector<double>>> core;
+vector<vector<vector<double>>> generationKernel(unsigned DEPTH, unsigned KERNEL_SIZE) {
+	vector<vector<vector<double>>> kernel;
 
 	for (int i = 0; i < DEPTH; i++)
 	{
-		core.push_back(vector<vector<double>> {});
+		kernel.push_back(vector<vector<double>> {});
 
-		core[i] = createFilledVector(CORE_SIZE, CORE_SIZE);
+		kernel[i] = createFilledVector(KERNEL_SIZE, KERNEL_SIZE);
 
-		for (int y1 = 0; y1 < CORE_SIZE; y1++) {
-			for (int x1 = 0; x1 < CORE_SIZE; x1++) {
-				core[i][y1][x1] = 1 - ((double)rand() / (RAND_MAX));
+		for (int y1 = 0; y1 < KERNEL_SIZE; y1++) {
+			for (int x1 = 0; x1 < KERNEL_SIZE; x1++) {
+				kernel[i][y1][x1] = 1 - ((double)rand() / (RAND_MAX));
 			}
 		}
 	}
 
-	return core;
+	return kernel;
 }
 
 // Генерация смещения

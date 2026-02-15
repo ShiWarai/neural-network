@@ -39,7 +39,7 @@ double der_relu(double x);
 [[nodiscard]] std::vector<double> ders_E4(std::vector<std::vector<double>> W, std::vector<double> E6_x);
 
 // Производные ядра (свёрточные ядра 2x2 и 3x3)
-[[nodiscard]] std::vector<std::vector<std::vector<double>>> ders_cores(std::vector<std::vector<double>> input, std::vector<std::vector<std::vector<double>>> ders_E1, unsigned core_size);
+[[nodiscard]] std::vector<std::vector<std::vector<double>>> ders_weights(std::vector<std::vector<double>> input, std::vector<std::vector<std::vector<double>>> ders_E1, unsigned kernel_size);
 
 // Производная по весу в полносвязном слое
 double getLossDerivative2D(std::vector<std::vector<std::vector<double>>> layer, std::vector<std::vector<double>> w, int j, double sum, double sums, int solution);
@@ -48,15 +48,15 @@ double getLossDerivative2D(std::vector<std::vector<std::vector<double>>> layer, 
 std::vector<double> getDelta(std::vector<double> a, int solution);
 
 // Обработка матрицы с ядром и смещением
-std::vector<std::vector<double>> getProcessedMatrix(std::vector<std::vector<std::vector<double>>> matrix, std::vector<std::vector<std::vector<double>>> core, std::vector<std::vector<double>> bias);
+std::vector<std::vector<double>> getProcessedMatrix(std::vector<std::vector<std::vector<double>>> matrix, std::vector<std::vector<std::vector<double>>> kernel, std::vector<std::vector<double>> bias);
 
-std::vector<std::vector<double>> getProcessedMatrix(std::vector<std::vector<std::vector<double>>> matrix, std::vector<std::vector<std::vector<double>>> core);
+std::vector<std::vector<double>> getProcessedMatrix(std::vector<std::vector<std::vector<double>>> matrix, std::vector<std::vector<std::vector<double>>> kernel);
 
 // Полносвязный слой сети (Dense)
-std::vector<std::vector<std::vector<double>>> Dense(std::vector<std::vector<std::vector<double>>> input, std::vector<std::vector<std::vector<std::vector<double>>>> cores_set, unsigned outputLayers, std::vector<std::vector<std::vector<double>>> biases_set);
+std::vector<std::vector<std::vector<double>>> Dense(std::vector<std::vector<std::vector<double>>> input, std::vector<std::vector<std::vector<std::vector<double>>>> weights_set, unsigned outputLayers, std::vector<std::vector<std::vector<double>>> biases_set);
 
 // Генерация ядра свёртки
-std::vector<std::vector<std::vector<double>>> generationCore(unsigned DEPTH, unsigned CORE_SIZE);
+std::vector<std::vector<std::vector<double>>> generationKernel(unsigned DEPTH, unsigned KERNEL_SIZE);
 
 // Генерация смещения
 std::vector<std::vector<double>> generationBias(int a, int b, double koef);

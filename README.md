@@ -35,8 +35,7 @@ neural-network/
 │   ├── neuralNetwork.hpp   # Слои и обучение
 │   ├── neural_IO.hpp       # Сохранение/загрузка весов
 │   └── testingArea.hpp     # Тестовые данные
-├── cores.dat              # Веса (создаётся при обучении)
-└── biases.dat             # Смещения
+└── weights.dat               # Веса (создаётся при обучении)
 ```
 
 ## Сборка
@@ -49,21 +48,20 @@ cmake --build build
 ## Использование
 
 ```bash
-./build/neural_network [путь_к_данным] [путь_к_cores] [путь_к_biases] [потоки]
+./build/neural_network [путь_к_данным] [путь_к_весам] [потоки]
 ```
 
 **Аргументы (все необязательны):**
 - `путь_к_данным` — папка с BMP-изображениями (по умолчанию: `data/`)
-- `путь_к_cores` — файл весов для загрузки/сохранения (по умолчанию: `cores.dat`)
-- `путь_к_biases` — файл смещений (по умолчанию: `biases.dat`)
+- `путь_к_весам` — файл весов для загрузки/сохранения (по умолчанию: `weights.dat`)
 - `потоки` — число потоков для инференса и обучения (по умолчанию: 1). При `потоки > 1`: инференс — параллельная обработка изображений; обучение — mini-batch SGD (батч 32). При `потоки == 1` — последовательный режим.
 
 **Примеры:**
 ```bash
-./build/neural_network                           # data/, cores.dat, biases.dat
-./build/neural_network my_images/                # my_images/, cores.dat, biases.dat
-./build/neural_network my_images/ model.dat      # + model.dat, biases.dat
-./build/neural_network my_images/ model.dat bias.dat 4   # 4 потока
+./build/neural_network                    # data/, weights.dat
+./build/neural_network my_images/         # my_images/, weights.dat
+./build/neural_network my_images/ model.dat   # + model.dat
+./build/neural_network my_images/ model.dat 4  # 4 потока
 ```
 
 1. Создайте папку с обучающими BMP 16×16 (по умолчанию `data/`).
@@ -73,13 +71,15 @@ cmake --build build
 
 При запуске выберите:
 - `0` — сгенерировать новые веса и начать обучение
-- `1` — загрузить веса из `cores.dat` (можно выбрать только прямой проход для тестирования)
+- `1` — загрузить веса из `weights.dat` (можно выбрать только прямой проход для тестирования)
 
 При обучении программа спросит число эпох (по умолчанию 3) и процент датасета для обучения (1–100, по умолчанию 100).
 
 ### Датасет
 
-Используется датасет **USPS**: [Kaggle — USPS Dataset](https://www.kaggle.com/datasets/bistaumanga/usps-dataset). Скачайте архив и поместите файл `usps.h5` в папку `data/`. Затем выполните `python3 scripts/usps_h5_to_bmp.py` — появятся папки `data/train/` и `data/test/`.
+Используется датасет **USPS**: [Kaggle — USPS Dataset](https://www.kaggle.com/datasets/bistaumanga/usps-dataset). 
+Скачайте архив и поместите файл `usps.h5` в папку `data/`. 
+Затем выполните `python3 scripts/usps_h5_to_bmp.py` — появятся папки `data/train/` и `data/test/`.
 
 ## Архитектура сети
 
