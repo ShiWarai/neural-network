@@ -8,6 +8,7 @@
 #include <cmath>
 #include <random>
 #include <ctime>
+#include <tuple>
 #include <filesystem>
 #include <thread>
 #include <mutex>
@@ -38,45 +39,81 @@ struct Gradients {
 void initGradients(Gradients& g, const vector<vector<vector<vector<vector<double>>>>>& cores) {
 	g.layer1 = cores[0];
 	g.layer2 = cores[1];
-	for (size_t i = 0; i < g.layer1.size(); i++)
-		for (size_t j = 0; j < g.layer1[i].size(); j++)
-			for (size_t y = 0; y < g.layer1[i][j].size(); y++)
-				for (size_t x = 0; x < g.layer1[i][j][y].size(); x++)
-					g.layer1[i][j][y][x] = 0;
-	for (size_t i = 0; i < g.layer2.size(); i++)
-		for (size_t j = 0; j < g.layer2[i].size(); j++)
-			for (size_t y = 0; y < g.layer2[i][j].size(); y++)
-				for (size_t x = 0; x < g.layer2[i][j][y].size(); x++)
-					g.layer2[i][j][y][x] = 0;
+	const size_t n1 = g.layer1.size();
+	for (size_t i = 0; i < n1; i++) {
+		const size_t n2 = g.layer1[i].size();
+		for (size_t j = 0; j < n2; j++) {
+			const size_t n3 = g.layer1[i][j].size();
+			for (size_t y = 0; y < n3; y++)
+				std::fill(g.layer1[i][j][y].begin(), g.layer1[i][j][y].end(), 0);
+		}
+	}
+	const size_t m1 = g.layer2.size();
+	for (size_t i = 0; i < m1; i++) {
+		const size_t m2 = g.layer2[i].size();
+		for (size_t j = 0; j < m2; j++) {
+			const size_t m3 = g.layer2[i][j].size();
+			for (size_t y = 0; y < m3; y++)
+				std::fill(g.layer2[i][j][y].begin(), g.layer2[i][j][y].end(), 0);
+		}
+	}
 }
 
 void addGradient(Gradients& acc, const Gradients& g) {
-	for (size_t i = 0; i < acc.layer1.size(); i++)
-		for (size_t j = 0; j < acc.layer1[i].size(); j++)
-			for (size_t y = 0; y < acc.layer1[i][j].size(); y++)
-				for (size_t x = 0; x < acc.layer1[i][j][y].size(); x++)
+	const size_t n1 = acc.layer1.size();
+	for (size_t i = 0; i < n1; i++) {
+		const size_t n2 = acc.layer1[i].size();
+		for (size_t j = 0; j < n2; j++) {
+			const size_t n3 = acc.layer1[i][j].size();
+			for (size_t y = 0; y < n3; y++) {
+				const size_t n4 = acc.layer1[i][j][y].size();
+				for (size_t x = 0; x < n4; x++)
 					acc.layer1[i][j][y][x] += g.layer1[i][j][y][x];
-	for (size_t i = 0; i < acc.layer2.size(); i++)
-		for (size_t j = 0; j < acc.layer2[i].size(); j++)
-			for (size_t y = 0; y < acc.layer2[i][j].size(); y++)
-				for (size_t x = 0; x < acc.layer2[i][j][y].size(); x++)
+			}
+		}
+	}
+	const size_t m1 = acc.layer2.size();
+	for (size_t i = 0; i < m1; i++) {
+		const size_t m2 = acc.layer2[i].size();
+		for (size_t j = 0; j < m2; j++) {
+			const size_t m3 = acc.layer2[i][j].size();
+			for (size_t y = 0; y < m3; y++) {
+				const size_t m4 = acc.layer2[i][j][y].size();
+				for (size_t x = 0; x < m4; x++)
 					acc.layer2[i][j][y][x] += g.layer2[i][j][y][x];
+			}
+		}
+	}
 }
 
 void applyGradients(vector<vector<vector<vector<vector<double>>>>>& cores,
 	const Gradients& grads, double lr, int batchSize) {
 	if (batchSize < 1) return;
-	double scale = lr / batchSize;
-	for (size_t i = 0; i < cores[0].size(); i++)
-		for (size_t j = 0; j < cores[0][i].size(); j++)
-			for (size_t y = 0; y < cores[0][i][j].size(); y++)
-				for (size_t x = 0; x < cores[0][i][j][y].size(); x++)
+	const double scale = lr / batchSize;
+	const size_t n1 = cores[0].size();
+	for (size_t i = 0; i < n1; i++) {
+		const size_t n2 = cores[0][i].size();
+		for (size_t j = 0; j < n2; j++) {
+			const size_t n3 = cores[0][i][j].size();
+			for (size_t y = 0; y < n3; y++) {
+				const size_t n4 = cores[0][i][j][y].size();
+				for (size_t x = 0; x < n4; x++)
 					cores[0][i][j][y][x] -= scale * grads.layer1[i][j][y][x];
-	for (size_t i = 0; i < cores[1].size(); i++)
-		for (size_t j = 0; j < cores[1][i].size(); j++)
-			for (size_t y = 0; y < cores[1][i][j].size(); y++)
-				for (size_t x = 0; x < cores[1][i][j][y].size(); x++)
+			}
+		}
+	}
+	const size_t m1 = cores[1].size();
+	for (size_t i = 0; i < m1; i++) {
+		const size_t m2 = cores[1][i].size();
+		for (size_t j = 0; j < m2; j++) {
+			const size_t m3 = cores[1][i][j].size();
+			for (size_t y = 0; y < m3; y++) {
+				const size_t m4 = cores[1][i][j][y].size();
+				for (size_t x = 0; x < m4; x++)
 					cores[1][i][j][y][x] -= scale * grads.layer2[i][j][y][x];
+			}
+		}
+	}
 }
 
 // Программа
@@ -97,7 +134,7 @@ int main(int argc, char* argv[])
 	if (!pathData.empty() && pathData.back() != '/' && pathData.back() != '\\')
 		pathData += '/';
 
-	srand(abs(rand() - time(NULL)) * 100);
+	srand(abs(rand() - static_cast<int>(time(nullptr))) * 100);
 	setlocale(LC_ALL, "ru");
 	// cout.setf(ios::fixed);
 
@@ -106,8 +143,14 @@ int main(int argc, char* argv[])
 	
 	static vector<vector<string>> trainingFiles;
 
-	const unsigned int PICTURE_SIZE = 16;
-	const unsigned int CORE_SIZE = 3;
+	constexpr unsigned int PICTURE_SIZE = 16;
+	constexpr unsigned int CORE_SIZE = 3;
+	constexpr int OUTPUT_DIM1 = 16;
+	constexpr int OUTPUT_DIM2 = 10;
+	constexpr int FLATTEN_DIM1 = 16;
+	constexpr int FLATTEN_DIM2 = 8;
+	constexpr int FLATTEN_DIM3 = 8;
+	constexpr int FLATTEN_SIZE = FLATTEN_DIM1 * FLATTEN_DIM2 * FLATTEN_DIM3;
 	const double LEARNING_SPEED = 1000;
 	const int BATCH_SIZE = 32;
 	const string PATH_S = pathData;
@@ -125,7 +168,8 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		std::random_shuffle(trainingFiles.begin(), trainingFiles.end());
+		std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
+		std::shuffle(trainingFiles.begin(), trainingFiles.end(), rng);
 
 		cout << "\n\n";
 
@@ -213,8 +257,18 @@ int main(int argc, char* argv[])
 	int filesCount = (int)(trainingFiles.size() * datasetPercent / 100);
 	if (filesCount < 1) filesCount = 1;
 
-	vector<double> delta;
-	double prediction;
+	// Предвычисление: полные пути и unitary codes
+	vector<string> fullPaths;
+	fullPaths.reserve(trainingFiles.size());
+	for (const auto& f : trainingFiles)
+		fullPaths.push_back(pathData + f[0]);
+
+	vector<vector<double>> unitaryCodes(10);
+	for (int d = 0; d < 10; d++)
+		unitaryCodes[d] = getUnitaryCode(10, d);
+
+	int totalSamples = EPOCHS * filesCount;
+	const int progressTotal = straightOnly ? filesCount : totalSamples;
 
 	// Потокобезопасные счётчики и логирование
 	atomic<int> win_atomic{0};
@@ -224,24 +278,19 @@ int main(int argc, char* argv[])
 	mutex stats_mutex;
 	mutex log_mutex;
 
-	int totalSamples = EPOCHS * filesCount;
-
 	// Итерации обучения (прямой и обратный ход)
 	for (int epoch = 1; epoch <= EPOCHS; epoch++) {
 
 		if (straightOnly && epoch > 1)
 			exit(0);
 
-		double epochLossSum = 0;
-		int epochSamples = 0;
-
 		// Лямбда обработки одного файла (для инференса - straightOnly)
 		auto processFile = [&](int fileNum) {
 			if (fileNum >= (int)trainingFiles.size() || fileNum >= filesCount) return;
 
-			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
+			BMP_BW image(trainingFiles[fileNum][1], fullPaths[fileNum], false);
 
-			int output_dim = 16;
+			int output_dim = OUTPUT_DIM1;
 			vector<vector<vector<vector<double>>>> cores_set;
 			vector<vector<vector<vector<double>>>> max_poses = { vector<vector<vector<double>>> {}, vector<vector<vector<double>>> {} };
 			unsigned layer_num = 1;
@@ -266,25 +315,27 @@ int main(int argc, char* argv[])
 
 			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim, { {{}} });
 			vector<vector<vector<double>>> layer3;
-			for (int i = 0; i < layer1.size(); i++) {
+			layer3.reserve(OUTPUT_DIM1);
+			for (size_t i = 0; i < layer1.size(); i++) {
 				vector<vector<vector<double>>> buffer = max_pooling(layer1[i]);
 				layer3.push_back(buffer[0]);
 				max_poses[0].push_back(buffer[1]);
 			}
 
 			vector<double> layer4;
-			for (int i = 0; i < layer3.size(); i++) {
+			layer4.reserve(FLATTEN_SIZE);
+			for (size_t i = 0; i < layer3.size(); i++) {
 				vector<double> new_matrix = flatten(layer3[i]);
-				for (size_t k = 0; k < new_matrix.size(); k++) layer4.push_back(new_matrix[k]);
+				for (double v : new_matrix) layer4.push_back(v);
 			}
 
 			layer_num += 1;
-			output_dim = 10;
+			output_dim = OUTPUT_DIM2;
 			cores_set.clear();
 			if (epoch == 1 && fileNum == 0) {
 				for (int i = 0; i < output_dim; i++) {
 					if (needToGenerate)
-						cores_set.push_back(vector<vector<vector<double>>> { { generationWeights(layer4.size()) } });
+						cores_set.push_back(vector<vector<vector<double>>> { { generationWeights(FLATTEN_SIZE) } });
 					else {
 						cores_set.push_back(vector<vector<vector<double>>> {});
 						for (int j = 0; j < 1; j++) {
@@ -299,42 +350,38 @@ int main(int argc, char* argv[])
 			}
 
 			vector<vector<vector<double>>> layer5;
+			layer5.reserve(OUTPUT_DIM2);
+			const size_t n_layer4 = layer4.size();
 			for (int i = 0; i < output_dim; i++) {
 				double sum = 0;
-				for (size_t k = 0; k < layer4.size(); k++) sum += layer4[k] * cores_set[i][0][0][k];
+				for (size_t k = 0; k < n_layer4; k++) sum += layer4[k] * cores_set[i][0][0][k];
 				layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}});
 			}
 
 			auto result = softmax(layer5);
-			int prediction = 0;
-			double maxProc = result[0];
-			for (size_t i = 0; i < result.size(); i++) {
-				if (result[i] > maxProc) { maxProc = result[i]; prediction = (int)i; }
-			}
+			auto it = std::max_element(result.begin(), result.end());
+			int prediction = static_cast<int>(std::distance(result.begin(), it));
 
-			double loss = getLoss(result, getUnitaryCode(result.size(), stoi(image.getName())));
-			delta = getDelta(result, stoi(image.getName()));
+			const int label = stoi(image.getName());
+			double loss = getLoss(result, unitaryCodes[label]);
 
-			int correct = (stoi(image.getName()) == prediction) ? 1 : 0;
+			int correct = (label == prediction) ? 1 : 0;
 			win_atomic += correct;
 			all_atomic += 1;
-			epochLossSum += loss;
-			epochSamples++;
 			{ lock_guard<mutex> lock(stats_mutex); loss_sum += loss; }
 			processed_atomic = (epoch - 1) * filesCount + (fileNum + 1);
 
 			int w = win_atomic.load(), a = all_atomic.load(), p = processed_atomic.load();
 			double avgLoss = (a > 0) ? (loss_sum / a) : 0;
 			double accuracy = (a > 0) ? (100.0 * w / a) : 0;
-			int progressTotal = straightOnly ? filesCount : totalSamples;
 			int progressPct = (progressTotal > 0) ? (int)(100.0 * p / progressTotal) : 0;
 
 			{ lock_guard<mutex> lock(log_mutex);
-				cout << left << setw(16) << ("(" + trainingFiles[fileNum][0] + ")")
-				     << " Prediction: " << prediction << "  |  Progress: " << p << "/" << progressTotal
-				     << " (" << progressPct << "%)"
-				     << "  |  Loss: " << fixed << setprecision(6) << avgLoss
-				     << "  |  Accuracy: " << setprecision(2) << accuracy << "%" << endl;
+				cout << "Epoch: " << epoch << "/" << EPOCHS
+				     << " | (" << trainingFiles[fileNum][0] << ") Prediction: " << prediction
+				     << " | Progress: " << p << "/" << progressTotal << " (" << progressPct << "%)"
+				     << " | Loss: " << fixed << setprecision(6) << avgLoss
+				     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
 			}
 		};
 
@@ -342,9 +389,9 @@ int main(int argc, char* argv[])
 		auto computeGradientsForFile = [&](int fileNum, Gradients& grad_out) -> tuple<double, int, int> {
 			if (fileNum >= (int)trainingFiles.size() || fileNum >= filesCount) return {0, 0, 0};
 
-			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
+			BMP_BW image(trainingFiles[fileNum][1], fullPaths[fileNum], false);
 
-			int output_dim = 16;
+			int output_dim = OUTPUT_DIM1;
 			vector<vector<vector<vector<double>>>> cores_set;
 			vector<vector<vector<vector<double>>>> max_poses = { vector<vector<vector<double>>> {}, vector<vector<vector<double>>> {} };
 			unsigned layer_num = 1;
@@ -369,25 +416,27 @@ int main(int argc, char* argv[])
 
 			vector<vector<vector<double>>> layer1 = Dense(vector<vector<vector<double>>> {image.getImage()}, cores_set, output_dim, { {{}} });
 			vector<vector<vector<double>>> layer3;
-			for (int i = 0; i < layer1.size(); i++) {
+			layer3.reserve(OUTPUT_DIM1);
+			for (size_t i = 0; i < layer1.size(); i++) {
 				vector<vector<vector<double>>> buffer = max_pooling(layer1[i]);
 				layer3.push_back(buffer[0]);
 				max_poses[0].push_back(buffer[1]);
 			}
 
 			vector<double> layer4;
-			for (int i = 0; i < layer3.size(); i++) {
+			layer4.reserve(FLATTEN_SIZE);
+			for (size_t i = 0; i < layer3.size(); i++) {
 				vector<double> new_matrix = flatten(layer3[i]);
-				for (size_t k = 0; k < new_matrix.size(); k++) layer4.push_back(new_matrix[k]);
+				for (double v : new_matrix) layer4.push_back(v);
 			}
 
 			layer_num += 1;
-			output_dim = 10;
+			output_dim = OUTPUT_DIM2;
 			cores_set.clear();
 			if (epoch == 1 && fileNum == 0) {
 				for (int i = 0; i < output_dim; i++) {
 					if (needToGenerate)
-						cores_set.push_back(vector<vector<vector<double>>> { { generationWeights(layer4.size()) } });
+						cores_set.push_back(vector<vector<vector<double>>> { { generationWeights(FLATTEN_SIZE) } });
 					else {
 						cores_set.push_back(vector<vector<vector<double>>> {});
 						for (int j = 0; j < 1; j++) {
@@ -402,32 +451,34 @@ int main(int argc, char* argv[])
 			}
 
 			vector<vector<vector<double>>> layer5;
+			layer5.reserve(OUTPUT_DIM2);
+			const size_t n_layer4_c = layer4.size();
 			for (int i = 0; i < output_dim; i++) {
 				double sum = 0;
-				for (size_t k = 0; k < layer4.size(); k++) sum += layer4[k] * cores_set[i][0][0][k];
+				for (size_t k = 0; k < n_layer4_c; k++) sum += layer4[k] * cores_set[i][0][0][k];
 				layer5.push_back(vector<vector<double>> { {std::max(0.0, sum)}});
 			}
 
 			auto result = softmax(layer5);
-			int prediction = 0;
-			double maxProc = result[0];
-			for (size_t i = 0; i < result.size(); i++) {
-				if (result[i] > maxProc) { maxProc = result[i]; prediction = (int)i; }
-			}
+			auto it_c = std::max_element(result.begin(), result.end());
+			int prediction = static_cast<int>(std::distance(result.begin(), it_c));
 
-			double loss = getLoss(result, getUnitaryCode(result.size(), stoi(image.getName())));
-			int correct = (stoi(image.getName()) == prediction) ? 1 : 0;
+			const int label_c = stoi(image.getName());
+			double loss = getLoss(result, unitaryCodes[label_c]);
+			int correct = (label_c == prediction) ? 1 : 0;
 
 			// Обратный ход — накопление градиентов
 			if (grad_out.layer1.empty())
 				initGradients(grad_out, cores);
 
 			vector<vector<double>> weights;
+			weights.reserve(OUTPUT_DIM2);
 			for (size_t i = 0; i < cores_set.size(); i++)
 				weights.push_back(cores_set[i][0][0]);
 
 			vector<vector<vector<double>>> layer_;
 			vector<double> ders_E6;
+			ders_E6.reserve(OUTPUT_DIM2);
 			double sums = 0;
 
 			for (size_t n = 0; n < weights.size(); n++) {
@@ -439,19 +490,20 @@ int main(int argc, char* argv[])
 
 			for (size_t weightJ = 0; weightJ < weights.size(); weightJ++) {
 				double sum = layer_[weightJ][0][0];
-				double der = getLossDerivative2D(layer_, weights, (int)weightJ, sum, sums, stoi(image.getName()));
+				double der = getLossDerivative2D(layer_, weights, (int)weightJ, sum, sums, label_c);
 				ders_E6.push_back(der);
 
-				for (size_t weightI = 0; weightI < layer4.size(); weightI++) {
+				for (size_t weightI = 0; weightI < n_layer4_c; weightI++) {
 					double grad = der * layer4[weightI];
 					grad_out.layer2[weightJ][0][0][weightI] += grad;
 				}
 			}
 
 			vector<double> E4_x = ders_E4(weights, ders_E6);
-			vector<vector<vector<double>>> E3_x = reverse_flatten(E4_x, 16, 8, 8);
+			vector<vector<vector<double>>> E3_x = reverse_flatten(E4_x, FLATTEN_DIM1, FLATTEN_DIM2, FLATTEN_DIM3);
 
 			vector<vector<vector<double>>> E1_x;
+			E1_x.reserve(OUTPUT_DIM1);
 			for (size_t k = 0; k < E3_x.size(); k++)
 				E1_x.push_back(reverse_max_pooling(E3_x[k], max_poses[0][k]));
 
@@ -506,17 +558,16 @@ int main(int argc, char* argv[])
 				int progressPct = (totalSamples > 0) ? (int)(100.0 * p / totalSamples) : 0;
 
 				{ lock_guard<mutex> lock(log_mutex);
-					cout << left << setw(16) << ("(" + trainingFiles[f][0] + ")")
-					     << " Prediction: " << prediction
-					     << "  |  Epoch: " << epoch << "/" << EPOCHS
-					     << "  |  Progress: " << p << "/" << totalSamples
-					     << " (" << progressPct << "%)"
-					     << "  |  Loss: " << fixed << setprecision(6) << avgLoss
-					     << "  |  Accuracy: " << setprecision(2) << accuracy << "%" << endl;
+					cout << "Epoch: " << epoch << "/" << EPOCHS
+					     << " | (" << trainingFiles[f][0] << ") Prediction: " << prediction
+					     << " | Progress: " << p << "/" << totalSamples << " (" << progressPct << "%)"
+					     << " | Loss: " << fixed << setprecision(6) << avgLoss
+					     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
 				}
 			}
 		} else {
 			// Обучение: батчи + многопоточность
+			const int totalBatches = (filesCount + BATCH_SIZE - 1) / BATCH_SIZE;
 			for (int batchStart = 0; batchStart < filesCount; batchStart += BATCH_SIZE) {
 				int batchEnd = min(batchStart + BATCH_SIZE, filesCount);
 				int actualBatchSize = batchEnd - batchStart;
@@ -571,15 +622,14 @@ int main(int argc, char* argv[])
 				int w = win_atomic.load(), a = all_atomic.load(), p = processed_atomic.load();
 				double avgLoss = (a > 0) ? (loss_sum / a) : 0;
 				double accuracy = (a > 0) ? (100.0 * w / a) : 0;
-				int totalBatches = (filesCount + BATCH_SIZE - 1) / BATCH_SIZE;
 				int batchIdx = batchStart / BATCH_SIZE + 1;
 
 				{ lock_guard<mutex> lock(log_mutex);
-					cout << "Batch " << batchIdx << "/" << totalBatches
-					     << "  |  Epoch: " << epoch << "/" << EPOCHS
-					     << "  |  Progress: " << p << "/" << totalSamples
-					     << "  |  Loss: " << fixed << setprecision(6) << avgLoss
-					     << "  |  Accuracy: " << setprecision(2) << accuracy << "%" << endl;
+					cout << "Epoch: " << epoch << "/" << EPOCHS
+					     << " | Batch " << batchIdx << "/" << totalBatches
+					     << " | Progress: " << p << "/" << totalSamples
+					     << " | Loss: " << fixed << setprecision(6) << avgLoss
+					     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
 				}
 			}
 		}

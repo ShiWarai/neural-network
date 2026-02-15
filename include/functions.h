@@ -19,8 +19,8 @@ int max4_index(double a, double b, double c, double d) {
 	return max_i;
 }
 
-// ???????? ?? 4 ??????????
-vector<double> max4(double a, double b, double c, double d)
+// Максимум из 4 элементов
+[[nodiscard]] vector<double> max4(double a, double b, double c, double d)
 {
 	a = std::max(a, b);
 	a = std::max(a, c);
@@ -28,7 +28,7 @@ vector<double> max4(double a, double b, double c, double d)
 	return vector<double> {a, (double) max4_index(a, b, c, d)};
 }
 
-// ????? ??????? ? ???????
+// Вывод матрицы в консоль
 void consoleOutMatrix(vector<vector<double>> a) {
 	for (int y = 0; y < a.size(); y++) {
 		for (int x = 0; x < a[0].size(); x++)
@@ -41,9 +41,9 @@ void consoleOutMatrix(vector<vector<double>> a) {
 	return;
 }
 
-vector<double> getUnitaryCode(int vectorSize, int num) {
+[[nodiscard]] vector<double> getUnitaryCode(int vectorSize, int num) {
 	vector<double> a;
-
+	a.reserve(vectorSize);
 	for (int i = 0; i < vectorSize; i++)
 		a.push_back(1 ? num == i : 0);
 

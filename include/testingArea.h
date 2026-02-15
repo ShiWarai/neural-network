@@ -1,6 +1,6 @@
 
 void testNet() {
-	// Инициализация ядер и смещения
+	// Инициализация данных и переменных
 	vector<vector<vector<vector<vector<double>>>>> cores;
 	vector<vector<vector<vector<double>>>> biases;
 
@@ -27,7 +27,7 @@ void testNet() {
 
 			cout << "Ожидаемо: " << answer << endl;
 
-			// Генерация или чтение набора ядер и смещения
+			// Генерация или чтение набора ядер и смещений
 			vector<vector<vector<vector<double>>>> cores_set;
 			vector<vector<vector<double>>> biases_set;
 
@@ -112,7 +112,7 @@ void testNet() {
 	int success = 0;
 	int failure = 0;
 
-	// Вывод результатов:
+	// Тестирование
 
 	data = { {{0,0,0,0,0,0,1,0},{1}},{{0,1,0,0,0,0,0,0},{0}},{{0,0,0,0,0,1,0,0},{1}},{{1,0,0,0,0,0,0,0},{0}},{{0,0,0,0,0,0,0,1},{1}},{{0,0,1,0,0,0,0,0},{0}}, };
 
@@ -129,9 +129,9 @@ void testNet() {
 		int layer_num = 1;
 		int output_dim = 2;
 
-		cout << "Ожидаемо: " << answer << endl;
+		cout << "?????????: " << answer << endl;
 
-		// Генерация или чтение набора ядер и смещения
+		// Генерация или чтение набора ядер
 		vector<vector<vector<vector<double>>>> cores_set;
 		vector<vector<vector<double>>> biases_set;
 

@@ -2,7 +2,11 @@
 
 Нейронная сеть для распознавания цифр 0–9 на чёрно-белых BMP-изображениях 16×16.
 
-> Ветка `main` содержит исходный проект с 1 курса бакалавриата. Реализация на C++ без внешних библиотек: свёртка, max-pooling, полносвязные слои, ReLU, softmax, обучение методом обратного распространения.
+> **Дисклеймер:** Проект делался на 1 курсе с учебным ограничением — **не использовать ООП**. Поэтому здесь нет классов, всё реализовано процедурно. Код лучше не использовать в качестве образца: это пример bad practice, особенно в структуре кода.
+
+> [Исходный проект](https://github.com/ShiWarai/neural-network/tree/main) — с 1 курса бакалавриата, последовательное обучение (online SGD), без многопоточности. Реализация на C++ без внешних библиотек: свёртка, max-pooling, полносвязные слои, ReLU, softmax, обратное распространение.
+
+В данной ветке добавлены **многопоточность** (инференс и обучение) и **mini-batch SGD** при нескольких потоках.
 
 ## Требования
 
@@ -45,14 +49,14 @@ cmake --build build
 - `путь_к_данным` — папка с BMP-изображениями (по умолчанию: `data/`)
 - `путь_к_cores` — файл весов для загрузки/сохранения (по умолчанию: `cores.dat`)
 - `путь_к_biases` — файл смещений (по умолчанию: `biases.dat`)
-- `потоки` — число потоков (инференс: параллельная обработка; обучение: пока последовательное) (по умолчанию: 1)
+- `потоки` — число потоков для инференса и обучения (по умолчанию: 1). При `потоки > 1`: инференс — параллельная обработка изображений; обучение — mini-batch SGD (батч 32). При `потоки == 1` — последовательный режим.
 
 **Примеры:**
 ```bash
 ./build/neural_network                           # data/, cores.dat, biases.dat
 ./build/neural_network my_images/                # my_images/, cores.dat, biases.dat
 ./build/neural_network my_images/ model.dat      # + model.dat, biases.dat
-./build/neural_network my_images/ model.dat bias.dat
+./build/neural_network my_images/ model.dat bias.dat 4   # 4 потока
 ```
 
 1. Создайте папку с обучающими BMP 16×16 (по умолчанию `data/`).
@@ -68,7 +72,7 @@ cmake --build build
 
 ### Датасет
 
-Используется датасет **USPS**: [Kaggle — USPS Dataset](https://www.kaggle.com/datasets/bistaumanga/usps-dataset). Скачайте архив и поместите файл `usps.h5` в папку `data/`. Затем выполните `python3 scripts/usps_h5_to_bmp.py` — появятся папки `data/train/` и `data/test/`. Обучение: `./build/neural_network data/train`. Проверка на тесте: `./build/neural_network data/test` (с загрузкой весов — вариант `1`).
+Используется датасет **USPS**: [Kaggle — USPS Dataset](https://www.kaggle.com/datasets/bistaumanga/usps-dataset). Скачайте архив и поместите файл `usps.h5` в папку `data/`. Затем выполните `python3 scripts/usps_h5_to_bmp.py` — появятся папки `data/train/` и `data/test/`.
 
 ## Архитектура сети
 
