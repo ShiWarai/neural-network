@@ -1,7 +1,9 @@
+#include "neuralNetwork.hpp"
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
 
-vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core);
-
+using namespace std;
 
 // Активационная функция (ReLU)
 vector<vector<double>> reluFunction(vector<vector<double>> a) {
@@ -42,15 +44,6 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 		finalBuffer.push_back(buffer);
 		max_poses.push_back(buffer_poses);
 	}
-
-	/*
-	for (int y = 0; y < currentSize / 2; y++) {
-		for (int x = 0; x < currentSize / 2; x++) {
-			a[y][x] = finalBuffer[y][x];
-			cout << setw(6) << setprecision(4) << a[y][x] << " ";
-		}
-		cout << endl;
-	} */
 
 	return vector<vector<vector<double>>> {finalBuffer, max_poses};
 }
@@ -152,14 +145,12 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	return  loss / y.size();
 }
 
-// Производная loss по предсказаниям
-
 // der_E8 = d(loss(R)) / d(R)
 double der_loss(vector<vector<vector<double>>> layerE6, int n, double solution) {
 	if (softmax(layerE6).empty())
 		return 0;
 
-	return -2.0 / layerE6.size() * (solution - softmax(layerE6)[n]); // layerE7 = softmax(layerE6)
+	return -2.0 / layerE6.size() * (solution - softmax(layerE6)[n]);
 }
 
 // der_E7 = d(softmax(R,A))/d(R)
@@ -192,7 +183,7 @@ double der_relu(double x) {
 }
 
 
-// Производнее ядра (свёрточные ядра 2x2 и 3x3)
+// Производные ядра (свёрточные ядра 2x2 и 3x3)
 [[nodiscard]] vector<vector<vector<double>>> ders_cores(vector<vector<double>> input, vector<vector<vector<double>>> ders_E1, unsigned core_size) {
 
 	const unsigned y_size = input.size();
@@ -230,23 +221,17 @@ double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<d
 		exit(0);
 
 
-	// Производнее предсказаний
-
 	double der = 0;
 
 	vector<double> ders;
 
-	// Производная по формеле E8' =
-	// = (-2 / k) * ((solution - Ri)
 	for (int k = 0; k < w.size(); k++)
 		ders.push_back(der_loss(layer, k, 1 ? solution == k : 0));
 
-	// E7' 
 	for (int k = 0; k < w.size(); k++) {
 		ders[k] *= der_softmax(layer, j, k, sums);
 	}
 
-	// E6'
 	der = der_relu(sum);
 
 	double E7_sum = 0;
@@ -293,22 +278,21 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 	for (int dim = 0; dim < dimensions; dim++) {
 
 		// Расширение матрицы
-		flat = matrixExpansion(matrix[dim], core[0].size() - 1); // Расширение матрицы для свёртки
+		flat = matrixExpansion(matrix[dim], core[0].size() - 1);
 
 		for (int y = 0; y < y_size; y++) {
 			for (int x = 0; x < x_size; x++) {
 
-				auto slice = matrixSlicer(flat, y, x, core[dim].size(), core[dim][0].size()); // Срез для окна
-				slice = dot(slice, core[dim]); // Матричное умножение
+				auto slice = matrixSlicer(flat, y, x, core[dim].size(), core[dim][0].size());
+				slice = dot(slice, core[dim]);
 
-				processed_pic[y][x] += elementsSum(slice); // Сумма элементов
+				processed_pic[y][x] += elementsSum(slice);
 			}
 		}
 	}
 
 	processed_pic = sumElements(processed_pic, bias);
 
-	// Применение функции relu()
 	return reluFunction(processed_pic);
 }
 
@@ -317,7 +301,7 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 
 	for (int y = 0; y < matrix[0].size(); y++) {
 		bias.push_back(vector<double>());
-		
+
 		for (int x = 0; x < matrix[0][0].size(); x++)
 			bias[y].push_back(0);
 	}
@@ -336,7 +320,7 @@ vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vecto
 	vector<vector<double>> bias;
 	for (int i = 0; i < outputLayers; i++) {
 		core = cores_set[i];
-		
+
 
 		if (biases_set[0][0].size() != 0) {
 			bias = biases_set[i];
@@ -347,7 +331,6 @@ vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vecto
 			new_matrix = getProcessedMatrix(input, core);
 		}
 
-		// Добавление в слой выхода
 		layer.push_back(new_matrix);
 	}
 
@@ -389,7 +372,7 @@ vector<vector<double>> generationBias(int a, int b, double koef) {
 	return bias;
 }
 
-// Генерация весов для полносвязного слои
+// Генерация весов для полносвязного слоя
 vector<double> generationWeights(int a) {
 	return generationBias(1, a, 1)[0];
 }

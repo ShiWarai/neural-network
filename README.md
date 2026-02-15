@@ -20,14 +20,21 @@
 neural-network/
 ├── CMakeLists.txt
 ├── src/
-│   └── main.cpp
+│   ├── main.cpp
+│   ├── matrixFunctions.cpp
+│   ├── functions.cpp
+│   ├── neuralNetwork.cpp
+│   ├── neural_IO.cpp
+│   ├── BMP_reading.cpp
+│   └── testingArea.cpp
 ├── include/
-│   ├── BMP_reading.h      # Чтение BMP
-│   ├── functions.h        # Вспомогательные функции
-│   ├── matrixFunctions.h  # Операции с матрицами
-│   ├── neuralNetwork.h    # Слои и обучение
-│   ├── neural_IO.h        # Сохранение/загрузка весов
-│   └── testingArea.h      # Тестовые данные
+│   ├── include.hpp         # Общий заголовок (iostream, BMP)
+│   ├── BMP_reading.hpp     # Чтение BMP
+│   ├── functions.hpp       # Вспомогательные функции
+│   ├── matrixFunctions.hpp # Операции с матрицами
+│   ├── neuralNetwork.hpp   # Слои и обучение
+│   ├── neural_IO.hpp       # Сохранение/загрузка весов
+│   └── testingArea.hpp     # Тестовые данные
 ├── cores.dat              # Веса (создаётся при обучении)
 └── biases.dat             # Смещения
 ```

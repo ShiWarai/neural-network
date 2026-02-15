@@ -1,3 +1,10 @@
+#include "matrixFunctions.hpp"
+#include <iostream>
+#include <cmath>
+#include <cstdlib>
+
+using namespace std;
+
 // Создание нулевой матрицы Y x X
 vector<vector<double>> createFilledVector(int y, int x) {
 	vector<vector<double>> c;

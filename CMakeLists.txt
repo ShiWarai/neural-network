@@ -3,7 +3,15 @@ project(NeuralNetwork LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(neural_network src/main.cpp)
+add_executable(neural_network
+	src/main.cpp
+	src/matrixFunctions.cpp
+	src/functions.cpp
+	src/neuralNetwork.cpp
+	src/neural_IO.cpp
+	src/BMP_reading.cpp
+	src/testingArea.cpp
+)
 target_include_directories(neural_network PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

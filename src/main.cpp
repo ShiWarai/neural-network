@@ -14,18 +14,18 @@
 #include <mutex>
 #include <atomic>
 #include <algorithm>
-#include "BMP_reading.h"
+#include "BMP_reading.hpp"
 
 namespace fs = std::filesystem;
 
 using namespace std;
 using namespace BMP;
 
-#include "functions.h"
-#include "matrixFunctions.h"
-#include "neuralNetwork.h"
-#include "neural_IO.h"
-#include "testingArea.h"
+#include "functions.hpp"
+#include "matrixFunctions.hpp"
+#include "neuralNetwork.hpp"
+#include "neural_IO.hpp"
+#include "testingArea.hpp"
 
 //vector<vector<double>> generationBias(int a, int b, double koef = 10);
 vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} });
@@ -84,6 +84,28 @@ void addGradient(Gradients& acc, const Gradients& g) {
 			}
 		}
 	}
+}
+
+// Параметризованный вывод прогресса (инференс / обучение)
+void logProgress(mutex& log_mutex, bool isInference,
+	int epoch, int totalEpochs,
+	const string& fileOrBatch,  // "(filename)" или "Batch N/M"
+	int prediction,             // -1 = не выводить
+	int processed, int progressTotal,
+	double avgLoss, double accuracy)
+{
+	lock_guard<mutex> lock(log_mutex);
+	if (!isInference)
+		cout << "Epoch: " << epoch << "/" << totalEpochs << " | ";
+	if (!fileOrBatch.empty())
+		cout << fileOrBatch << " ";
+	if (prediction >= 0)
+		cout << "Prediction: " << prediction << " | ";
+	cout << "Progress: " << processed << "/" << progressTotal;
+	if (progressTotal > 0)
+		cout << " (" << (int)(100.0 * processed / progressTotal) << "%)";
+	cout << " | Loss: " << fixed << setprecision(6) << avgLoss
+	     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
 }
 
 void applyGradients(vector<vector<vector<vector<vector<double>>>>>& cores,
@@ -374,15 +396,9 @@ int main(int argc, char* argv[])
 			int w = win_atomic.load(), a = all_atomic.load(), p = processed_atomic.load();
 			double avgLoss = (a > 0) ? (loss_sum / a) : 0;
 			double accuracy = (a > 0) ? (100.0 * w / a) : 0;
-			int progressPct = (progressTotal > 0) ? (int)(100.0 * p / progressTotal) : 0;
 
-			{ lock_guard<mutex> lock(log_mutex);
-				cout << "Epoch: " << epoch << "/" << EPOCHS
-				     << " | (" << trainingFiles[fileNum][0] << ") Prediction: " << prediction
-				     << " | Progress: " << p << "/" << progressTotal << " (" << progressPct << "%)"
-				     << " | Loss: " << fixed << setprecision(6) << avgLoss
-				     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
-			}
+			logProgress(log_mutex, straightOnly, epoch, EPOCHS,
+				"(" + trainingFiles[fileNum][0] + ")", prediction, p, progressTotal, avgLoss, accuracy);
 		};
 
 		// Лямбда: вычислить градиенты для одного файла (для обучения с батчами)
@@ -555,15 +571,9 @@ int main(int argc, char* argv[])
 				int w = win_atomic.load(), a = all_atomic.load(), p = processed_atomic.load();
 				double avgLoss = (a > 0) ? (loss_sum / a) : 0;
 				double accuracy = (a > 0) ? (100.0 * w / a) : 0;
-				int progressPct = (totalSamples > 0) ? (int)(100.0 * p / totalSamples) : 0;
 
-				{ lock_guard<mutex> lock(log_mutex);
-					cout << "Epoch: " << epoch << "/" << EPOCHS
-					     << " | (" << trainingFiles[f][0] << ") Prediction: " << prediction
-					     << " | Progress: " << p << "/" << totalSamples << " (" << progressPct << "%)"
-					     << " | Loss: " << fixed << setprecision(6) << avgLoss
-					     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
-				}
+				logProgress(log_mutex, false, epoch, EPOCHS,
+					"(" + trainingFiles[f][0] + ")", prediction, p, totalSamples, avgLoss, accuracy);
 			}
 		} else {
 			// Обучение: батчи + многопоточность
@@ -623,14 +633,10 @@ int main(int argc, char* argv[])
 				double avgLoss = (a > 0) ? (loss_sum / a) : 0;
 				double accuracy = (a > 0) ? (100.0 * w / a) : 0;
 				int batchIdx = batchStart / BATCH_SIZE + 1;
+				string batchStr = "Batch " + to_string(batchIdx) + "/" + to_string(totalBatches);
 
-				{ lock_guard<mutex> lock(log_mutex);
-					cout << "Epoch: " << epoch << "/" << EPOCHS
-					     << " | Batch " << batchIdx << "/" << totalBatches
-					     << " | Progress: " << p << "/" << totalSamples
-					     << " | Loss: " << fixed << setprecision(6) << avgLoss
-					     << " | Accuracy: " << setprecision(2) << accuracy << "%" << endl;
-				}
+				logProgress(log_mutex, false, epoch, EPOCHS,
+					batchStr, -1, p, totalSamples, avgLoss, accuracy);
 			}
 		}
 	}

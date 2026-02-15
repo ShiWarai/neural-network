@@ -1,6 +1,13 @@
+#include "testingArea.hpp"
+#include "functions.hpp"
+#include "neuralNetwork.hpp"
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
 
 void testNet() {
-	// Инициализация данных и переменных
+	// Инициализация данных и переменных…
 	vector<vector<vector<vector<vector<double>>>>> cores;
 	vector<vector<vector<vector<double>>>> biases;
 
@@ -129,7 +136,7 @@ void testNet() {
 		int layer_num = 1;
 		int output_dim = 2;
 
-		cout << "?????????: " << answer << endl;
+		cout << "Ожидаемо: " << answer << endl;
 
 		// Генерация или чтение набора ядер
 		vector<vector<vector<vector<double>>>> cores_set;

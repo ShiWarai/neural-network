@@ -1,4 +1,9 @@
+#include "neural_IO.hpp"
+#include "matrixFunctions.hpp"
+#include <iostream>
+#include <cstdlib>
 
+using namespace std;
 
 // Запись матрицы в файл
 void writeMatrixInFile(ofstream& fout, vector<vector<double>> matrix)

@@ -1,4 +1,9 @@
+#include "functions.hpp"
 #include <algorithm>
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
 
 int max4_index(double a, double b, double c, double d) {
 	int max_i;
@@ -48,9 +53,3 @@ void consoleOutMatrix(vector<vector<double>> a) {
 
 	return a;
 }
-
-
-
-
-
-
