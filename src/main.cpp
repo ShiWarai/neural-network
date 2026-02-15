@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <limits>
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <iomanip>
@@ -7,6 +9,10 @@
 #include <random>
 #include <ctime>
 #include <filesystem>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <algorithm>
 #include "BMP_reading.h"
 
 namespace fs = std::filesystem;
@@ -24,15 +30,18 @@ using namespace BMP;
 vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers, vector<vector<vector<double>>>  biases_set = { {{}} });
 
 // Программа
-// Использование: neural_network [путь_к_данным] [путь_к_cores] [путь_к_biases]
+// Использование: neural_network [путь_к_данным] [путь_к_cores] [путь_к_biases] [потоки]
 //   путь_к_данным — папка с BMP (по умолчанию: data/)
 //   путь_к_cores  — файл весов (по умолчанию: cores.dat)
 //   путь_к_biases — файл смещений (по умолчанию: biases.dat)
+//   потоки        — число потоков (по умолчанию: 1)
 int main(int argc, char* argv[])
 {
 	const string DATA_PATH = (argc >= 2) ? string(argv[1]) : "data/";
 	const string pathCores = (argc >= 3) ? string(argv[2]) : "cores.dat";
 	const string pathBiases = (argc >= 4) ? string(argv[3]) : "biases.dat";
+	int numThreads = (argc >= 5) ? atoi(argv[4]) : 1;
+	if (numThreads < 1) numThreads = 1;
 
 	string pathData = DATA_PATH;
 	if (!pathData.empty() && pathData.back() != '/' && pathData.back() != '\\')
@@ -128,6 +137,9 @@ int main(int argc, char* argv[])
 		break;
 	}
 
+	// Убрать остаток строки после cin >>, чтобы getline работал корректно
+	cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
 	if (!needToGenerate) {
 		finCores.open(pathCores);
 		//finBiases.open(pathBiases);
@@ -142,12 +154,9 @@ int main(int argc, char* argv[])
 	int datasetPercent = 100;
 	if (!straightOnly) {
 		cout << "Число эпох обучения? (по умолчанию 3)\n";
-		cin >> EPOCHS;
-		if (EPOCHS < 1) EPOCHS = 3;
+		{ string line; getline(cin, line); if (!line.empty()) { int v = atoi(line.c_str()); if (v >= 1) EPOCHS = v; } }
 		cout << "Процент датасета для обучения? (1-100, по умолчанию 100)\n";
-		cin >> datasetPercent;
-		if (datasetPercent < 1) datasetPercent = 1;
-		if (datasetPercent > 100) datasetPercent = 100;
+		{ string line; getline(cin, line); if (!line.empty()) { int v = atoi(line.c_str()); if (v >= 1 && v <= 100) datasetPercent = v; } }
 	}
 
 	int filesCount = (int)(trainingFiles.size() * datasetPercent / 100);
@@ -156,8 +165,14 @@ int main(int argc, char* argv[])
 	vector<double> delta;
 	double prediction;
 
-	int win = 0;
-	int all = 0;
+	// Потокобезопасные счётчики и логирование
+	atomic<int> win_atomic{0};
+	atomic<int> all_atomic{0};
+	atomic<int> processed_atomic{0};
+	double loss_sum = 0;
+	mutex stats_mutex;
+	mutex log_mutex;
+
 	int totalSamples = EPOCHS * filesCount;
 
 	// Итерации обучения (прямой и обратный ход)
@@ -169,7 +184,9 @@ int main(int argc, char* argv[])
 		double epochLossSum = 0;
 		int epochSamples = 0;
 
-		for (int fileNum = 0; (fileNum < trainingFiles.size()) && (fileNum < filesCount); fileNum++) { // trainingFiles.size()
+		// Лямбда обработки одного файла (для параллелизации)
+		auto processFile = [&](int fileNum) {
+			if (fileNum >= (int)trainingFiles.size() || fileNum >= filesCount) return;
 
 			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
 
@@ -336,30 +353,38 @@ int main(int argc, char* argv[])
 			double loss = getLoss(result, getUnitaryCode(result.size(), stoi(image.getName())));
 			delta = getDelta(result, stoi(image.getName()));
 
-			win += (1 ? stoi(image.getName()) == prediction : 0);
-			all += 1;
+			int correct = (stoi(image.getName()) == prediction) ? 1 : 0;
+			win_atomic += correct;
+			all_atomic += 1;
 
 			epochLossSum += loss;
 			epochSamples++;
 
-			double avgLoss = epochLossSum / epochSamples;
-			double accuracy = ((double)win / (double)all) * 100.0;
-			int processed = (epoch - 1) * filesCount + (fileNum + 1);
-			int progressTotal = straightOnly ? filesCount : totalSamples;
-			int progressPct = straightOnly
-				? (int)(100.0 * processed / filesCount)
-				: (int)(100.0 * processed / totalSamples);
+			{
+				lock_guard<mutex> lock(stats_mutex);
+				loss_sum += loss;
+			}
+			processed_atomic = (epoch - 1) * filesCount + (fileNum + 1);
 
-			// Единый формат вывода: файл, предсказание, эпоха (при обучении), прогресс, loss, accuracy
-			cout << left << setw(16) << ("(" + trainingFiles[fileNum][0] + ")")
+			int w = win_atomic.load(), a = all_atomic.load(), p = processed_atomic.load();
+			double avgLoss = (a > 0) ? (loss_sum / a) : 0;
+			double accuracy = (a > 0) ? (100.0 * w / a) : 0;
+			int progressTotal = straightOnly ? filesCount : totalSamples;
+			int progressPct = (progressTotal > 0) ? (int)(100.0 * p / progressTotal) : 0;
+
+			// Потокобезопасный вывод
+			{
+				lock_guard<mutex> lock(log_mutex);
+				cout << left << setw(16) << ("(" + trainingFiles[fileNum][0] + ")")
 			     << " Prediction: " << prediction;
 			if (!straightOnly) {
 				cout << "  |  Epoch: " << epoch << "/" << EPOCHS;
 			}
-			cout << "  |  Progress: " << processed << "/" << progressTotal
+			cout << "  |  Progress: " << p << "/" << progressTotal
 			     << " (" << progressPct << "%)"
 			     << "  |  Loss: " << fixed << setprecision(6) << avgLoss
 			     << "  |  Accuracy: " << setprecision(2) << accuracy << "%" << endl;
+			}
 
 			// Обратный ход
 
@@ -462,6 +487,27 @@ int main(int argc, char* argv[])
 				}
 
 			}
+		};  // конец processFile
+
+		// Обработка: сначала файл 0 (инициализация cores), затем остальные
+		if (filesCount > 0) processFile(0);
+
+		if (numThreads > 1 && straightOnly && filesCount > 1) {
+			atomic<int> nextFile{1};
+			vector<thread> threads;
+			int numWorkers = min(numThreads, filesCount - 1);
+			for (int t = 0; t < numWorkers; t++) {
+				threads.emplace_back([&]() {
+					while (true) {
+						int f = nextFile++;
+						if (f >= filesCount) break;
+						processFile(f);
+					}
+				});
+			}
+			for (auto& th : threads) th.join();
+		} else {
+			for (int f = 1; f < filesCount; f++) processFile(f);
 		}
 	}
 
