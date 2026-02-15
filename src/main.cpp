@@ -48,7 +48,8 @@ int main(int argc, char* argv[])
 	static vector<vector<string>> trainingFiles;
 
 	const unsigned int PICTURE_SIZE = 16;
-	const double LEARNING_SPEED = 200;
+	const unsigned int CORE_SIZE = 3;
+	const double LEARNING_SPEED = 1000;
 	const string PATH_S = pathData;
 	// Чтение файлов
 	{
@@ -138,19 +139,26 @@ int main(int argc, char* argv[])
 	}
 
 	int EPOCHS = 3;
+	int datasetPercent = 100;
 	if (!straightOnly) {
 		cout << "Число эпох обучения? (по умолчанию 3)\n";
 		cin >> EPOCHS;
 		if (EPOCHS < 1) EPOCHS = 3;
+		cout << "Процент датасета для обучения? (1-100, по умолчанию 100)\n";
+		cin >> datasetPercent;
+		if (datasetPercent < 1) datasetPercent = 1;
+		if (datasetPercent > 100) datasetPercent = 100;
 	}
 
-	const int filesCount = 400;
+	int filesCount = (int)(trainingFiles.size() * datasetPercent / 100);
+	if (filesCount < 1) filesCount = 1;
 
 	vector<double> delta;
 	double prediction;
 
 	int win = 0;
 	int all = 0;
+	int totalSamples = EPOCHS * filesCount;
 
 	// Итерации обучения (прямой и обратный ход)
 	for (int epoch = 1; epoch <= EPOCHS; epoch++) {
@@ -158,10 +166,12 @@ int main(int argc, char* argv[])
 		if (straightOnly && epoch > 1)
 			exit(0);
 
+		double epochLossSum = 0;
+		int epochSamples = 0;
+
 		for (int fileNum = 0; (fileNum < trainingFiles.size()) && (fileNum < filesCount); fileNum++) { // trainingFiles.size()
 
 			BMP_BW image(trainingFiles[fileNum][1], (string)(PATH_S + trainingFiles[fileNum][0]), false);
-			cout << "(Epoch: " << epoch << ", " << trainingFiles[fileNum][0] << ") :" << endl;
 
 			// Прямой ход
 			
@@ -174,13 +184,12 @@ int main(int argc, char* argv[])
 
 			// Слой 1
 
-			cout << "1 LAYER" << endl;
 			unsigned layer_num = 1;
 
 			// Генерация или чтение набора ядер и смещения
 			if (epoch == 1 && fileNum == 0)
 			{
-				int DEPTH = 1, CORE_SIZE = 2;
+				int DEPTH = 1;
 
 				for (int i = 0; i < output_dim; i++)
 				{
@@ -220,7 +229,6 @@ int main(int argc, char* argv[])
 
 			/*
 			// 2 слой
-			cout << "2 LAYER" << endl;
 			vector<vector<vector<double>>> layer2;
 
 			for (int i = 0; i < layer1.size(); i++) {
@@ -233,8 +241,6 @@ int main(int argc, char* argv[])
 
 
 			// 3 слой
-			cout << "3 LAYER" << endl;
-
 			vector<vector<vector<double>>> layer3;
 
 			for (int i = 0; i < layer1.size(); i++) {
@@ -246,7 +252,6 @@ int main(int argc, char* argv[])
 
 
 			// 4 слой
-			cout << "4 LAYER" << endl;
 			vector<double> layer4;
 
 			vector<double> new_matrix;
@@ -265,7 +270,6 @@ int main(int argc, char* argv[])
 
 
 			// 5 слой (слой выхода)
-			cout << "5 LAYER" << endl;
 			layer_num += 1;
 
 			output_dim = 10;
@@ -318,11 +322,6 @@ int main(int argc, char* argv[])
 			// Просчёт вероятностей
 			auto result = softmax(layer5);
 
-			cout << endl << "Result:" << endl;
-			for (int x = 0; x < result.size(); x++)
-				cout << result[x] << endl;
-			cout << endl;
-
 			// Итоговое предсказание
 			int prediction = 0;
 
@@ -334,15 +333,33 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			cout << "Prediction:" << prediction << endl << endl;
-
+			double loss = getLoss(result, getUnitaryCode(result.size(), stoi(image.getName())));
 			delta = getDelta(result, stoi(image.getName()));
-
-			cout << "Summary loss:" << getLoss(result, getUnitaryCode(result.size(), stoi(image.getName()))) << endl << endl;
-
 
 			win += (1 ? stoi(image.getName()) == prediction : 0);
 			all += 1;
+
+			epochLossSum += loss;
+			epochSamples++;
+
+			double avgLoss = epochLossSum / epochSamples;
+			double accuracy = ((double)win / (double)all) * 100.0;
+			int processed = (epoch - 1) * filesCount + (fileNum + 1);
+			int progressTotal = straightOnly ? filesCount : totalSamples;
+			int progressPct = straightOnly
+				? (int)(100.0 * processed / filesCount)
+				: (int)(100.0 * processed / totalSamples);
+
+			// Единый формат вывода: файл, предсказание, эпоха (при обучении), прогресс, loss, accuracy
+			cout << left << setw(16) << ("(" + trainingFiles[fileNum][0] + ")")
+			     << " Prediction: " << prediction;
+			if (!straightOnly) {
+				cout << "  |  Epoch: " << epoch << "/" << EPOCHS;
+			}
+			cout << "  |  Progress: " << processed << "/" << progressTotal
+			     << " (" << progressPct << "%)"
+			     << "  |  Loss: " << fixed << setprecision(6) << avgLoss
+			     << "  |  Accuracy: " << setprecision(2) << accuracy << "%" << endl;
 
 			// Обратный ход
 
@@ -426,7 +443,7 @@ int main(int argc, char* argv[])
 
 
 				// Нахождение производных для ядер
-				vector<vector<vector<double>>> ders_E1 = ders_cores(image.getImage(), E1_x);
+				vector<vector<vector<double>>> ders_E1 = ders_cores(image.getImage(), E1_x, CORE_SIZE);
 
 				layer_num -= 1;
 				for (int k = 0; k < ders_E1.size(); k++) {
@@ -435,7 +452,7 @@ int main(int argc, char* argv[])
 						for (int x = 0; x < ders_E1[0][0].size(); x++) {
 
 							// Корректируем ядра
-							cores[layer_num - 1][k][0][y][x] -= 1000 * ders_E1[k][y][x];
+							cores[layer_num - 1][k][0][y][x] -= LEARNING_SPEED * ders_E1[k][y][x];
 
 
 						}
@@ -445,12 +462,8 @@ int main(int argc, char* argv[])
 				}
 
 			}
-			
-			cout << "Правильно: " << ((double)win / (double)all) * 100.0 << "%" << endl;
-
 		}
 	}
-
 
 
 	if (!needToGenerate)

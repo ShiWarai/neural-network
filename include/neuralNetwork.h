@@ -192,34 +192,30 @@ vector<double> ders_E4(vector<vector<double>> W, vector<double> E6_x) {
 }
 
 
-// ???????? ??????? (??????????? ??? ???? 2x2)
-vector<vector<vector<double>>> ders_cores(vector<vector<double>> input, vector<vector<vector<double>>> ders_E1) {
+// Производные ядер (поддержка ядра 2x2 и 3x3)
+vector<vector<vector<double>>> ders_cores(vector<vector<double>> input, vector<vector<vector<double>>> ders_E1, unsigned core_size) {
 
-	const unsigned core_size = 2;
 	const unsigned y_size = input.size();
 	const unsigned x_size = input[0].size();
 
-	vector<vector<vector<double>>> ders_cores_; // ??????????? ????
+	vector<vector<vector<double>>> ders_cores_;
 	unsigned outputLayers = ders_E1.size();
 
-	int panding_ = (int)ceil((double)(core_size - 1) / 2); // ?????????? ?????? ??. ???????
-	vector<vector<double>> flat = matrixExpansion(input, panding_); // ???????? ??????????? ??????? ?????????
+	int panding_ = (int)ceil((double)(core_size - 1) / 2);
+	vector<vector<double>> flat = matrixExpansion(input, core_size - 1);
 
-		for (int k = 0; k < outputLayers; k++) {
+	for (int k = 0; k < outputLayers; k++) {
 		vector<vector<double>> der_core = createFilledVector(core_size, core_size);
 
-			for (int y = 0; y < y_size; y++) {
-				for (int x = 0; x < x_size; x++) {
-
-					// ?????????? ????????? ??????????? ?????????? ???? ?? ??????? ???????? X
-
-					der_core[0][0] += flat[y + panding_ - 1][x + panding_ - 1] * ders_E1[k][y][x];
-					der_core[0][1] += flat[y + panding_ - 1][x + panding_] * ders_E1[k][y][x];
-					der_core[1][0] += flat [y + panding_] [x + panding_ - 1] * ders_E1[k][y][x];
-					der_core[1][1] += flat[y + panding_][x + panding_] * ders_E1[k][y][x];
-
+		for (int y = 0; y < y_size; y++) {
+			for (int x = 0; x < x_size; x++) {
+				for (unsigned i = 0; i < core_size; i++) {
+					for (unsigned j = 0; j < core_size; j++) {
+						der_core[i][j] += flat[y + i][x + j] * ders_E1[k][y][x];
+					}
 				}
-			}		
+			}
+		}
 
 		ders_cores_.push_back(der_core);
 	}
