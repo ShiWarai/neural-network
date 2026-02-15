@@ -22,10 +22,9 @@ int max4_index(double a, double b, double c, double d) {
 // Максимум из 4 элементов
 [[nodiscard]] vector<double> max4(double a, double b, double c, double d)
 {
-	a = std::max(a, b);
-	a = std::max(a, c);
-	a = std::max(a, d);
-	return vector<double> {a, (double) max4_index(a, b, c, d)};
+	int idx = max4_index(a, b, c, d);  // индекс до изменения a
+	double max_val = std::max({a, b, c, d});
+	return vector<double> {max_val, (double) idx};
 }
 
 // Вывод матрицы в консоль

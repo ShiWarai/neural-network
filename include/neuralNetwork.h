@@ -3,7 +3,7 @@
 vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core);
 
 
-// ??????????????? ?????????? (ReLU)
+// Активационная функция (ReLU)
 vector<vector<double>> reluFunction(vector<vector<double>> a) {
 
 	for (int y1 = 0; y1 < a.size(); y1++) {
@@ -15,7 +15,7 @@ vector<vector<double>> reluFunction(vector<vector<double>> a) {
 	return a;
 }
 
-// ????? ? ???????? (???? 2x2)
+// Макс в пулинге (блок 2x2)
 vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	vector<vector<double>> finalBuffer;
 	int currentSize = a.size();
@@ -55,7 +55,7 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	return vector<vector<vector<double>>> {finalBuffer, max_poses};
 }
 
-// ??????????? ???????????????? max_pooling ??? ???? 2x2
+// Обратное преобразование max_pooling для окна 2x2
 [[nodiscard]] vector<vector<double>> reverse_max_pooling(vector<vector<double>> a, vector<vector<double>> max_poses) {
 
 	if (a.size() != max_poses.size() || a[0].size() != max_poses[0].size())
@@ -90,7 +90,7 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 }
 
 
-// ?????????????? ?????? ??? 0 ?? 9 ? ?????????????? (softmax)
+// Нормализация чисел от 0 до 9 в вероятности (softmax)
 [[nodiscard]] vector<double> softmax(vector<vector<vector<double>>> a) {
 	double sum = 0;
 	vector<double> c;
@@ -110,7 +110,7 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	return c;
 }
 
-// ????????????????? ? ???????? (flatten)
+// Преобразование в вектор (flatten)
 [[nodiscard]] vector<double> flatten(vector<vector<double>> a) {
 	vector<double> b;
 	for (int y = 0; y < a.size(); y++) {
@@ -121,11 +121,11 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	return b;
 }
 
-// ??????????? ???????????????? (??? ???? flatten ? ??????????, ?????????? dim1, dim2, dim3)
+// Обратное преобразование (от слоя flatten к тензору, размеры dim1, dim2, dim3)
 [[nodiscard]] vector<vector<vector<double>>> reverse_flatten(vector<double> a, int dim1, int dim2, int dim3) {
 	vector<vector<vector<double>>> b;
 
-	// ???????????????? ?????????
+	// Инициализация тензора
 	for (int z = 0; z < dim1; z++) {
 		b.push_back(vector<vector<double>>{});
 		for (int y = 0; y < dim2; y++) {
@@ -139,7 +139,7 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	return b;
 }
 
-// ????????? ?????????
+// Функция потерь
 [[nodiscard]] double getLoss(vector<double> y, vector<double> solution) {
 	if (y.size() != solution.size())
 		exit(0);
@@ -152,7 +152,7 @@ vector<vector<vector<double>>> max_pooling(vector<vector<double>> a) {
 	return  loss / y.size();
 }
 
-// ????????????? loss ?? ??????????????
+// Производная loss по предсказаниям
 
 // der_E8 = d(loss(R)) / d(R)
 double der_loss(vector<vector<vector<double>>> layerE6, int n, double solution) {
@@ -192,7 +192,7 @@ double der_relu(double x) {
 }
 
 
-// ?????????????? ????? (??????????????? ????? 2x2 ? 3x3)
+// Производнее ядра (свёрточные ядра 2x2 и 3x3)
 [[nodiscard]] vector<vector<vector<double>>> ders_cores(vector<vector<double>> input, vector<vector<vector<double>>> ders_E1, unsigned core_size) {
 
 	const unsigned y_size = input.size();
@@ -223,20 +223,20 @@ double der_relu(double x) {
 	return ders_cores_;
 }
 
-// ????????????? ?? ????? ? ???????????? ????
+// Производная по весу в полносвязном слое
 double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<double>> w, int j,  double sum, double sums, int solution) {
 
 	if ( j >= w.size() )
 		exit(0);
 
 
-	// ?????????????? ?????????????
+	// Производнее предсказаний
 
 	double der = 0;
 
 	vector<double> ders;
 
-	// ????????????? ?? ?????????? E8' =
+	// Производная по формеле E8' =
 	// = (-2 / k) * ((solution - Ri)
 	for (int k = 0; k < w.size(); k++)
 		ders.push_back(der_loss(layer, k, 1 ? solution == k : 0));
@@ -260,7 +260,7 @@ double getLossDerivative2D(vector<vector<vector<double>>> layer, vector<vector<d
 
 
 
-// ????????????? ?????????
+// Вычисление дельты
 vector<double> getDelta(vector<double> a, int solution) {
 	for (int i = 0; i < a.size(); i++) {
 
@@ -274,7 +274,7 @@ vector<double> getDelta(vector<double> a, int solution) {
 	return a;
 }
 
-// ???????????? ??????????? ? ?????? ? ??????????
+// Обработка матрицы с ядром и смещением
 vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix, vector<vector<vector<double>>> core, vector<vector<double>> bias) {
 
 	if (core.size() != matrix.size())
@@ -287,28 +287,28 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 	auto processed_pic = createFilledVector(y_size, x_size);
 
 	int dimensions = matrix.size();
-	int panding_ = (int)ceil((double)(core.size() - 1) / 2); // padding ??? ??????????
+	int panding_ = (int)ceil((double)(core.size() - 1) / 2); // padding для свёртки
 
 	vector<vector<double>> flat;
 	for (int dim = 0; dim < dimensions; dim++) {
 
-		// ???????????? ???????????
-		flat = matrixExpansion(matrix[dim], core[0].size() - 1); // ???????????? ??????????? ??? ??????????
+		// Расширение матрицы
+		flat = matrixExpansion(matrix[dim], core[0].size() - 1); // Расширение матрицы для свёртки
 
 		for (int y = 0; y < y_size; y++) {
 			for (int x = 0; x < x_size; x++) {
 
-				auto slice = matrixSlicer(flat, y, x, core[dim].size(), core[dim][0].size()); // ????? ??? ????
-				slice = dot(slice, core[dim]); // ????????????? ??????????
+				auto slice = matrixSlicer(flat, y, x, core[dim].size(), core[dim][0].size()); // Срез для окна
+				slice = dot(slice, core[dim]); // Матричное умножение
 
-				processed_pic[y][x] += elementsSum(slice); // ?????? ??????????
+				processed_pic[y][x] += elementsSum(slice); // Сумма элементов
 			}
 		}
 	}
 
 	processed_pic = sumElements(processed_pic, bias);
 
-	// ???????????? ?????????? relu()
+	// Применение функции relu()
 	return reluFunction(processed_pic);
 }
 
@@ -325,7 +325,7 @@ vector<vector<double>> getProcessedMatrix(vector<vector<vector<double>>> matrix,
 	return getProcessedMatrix(matrix, core, bias);
 }
 
-// ?????????????? ???? ????? (Dense)
+// Полносвязный слой сети (Dense)
 vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vector<vector<vector<vector<double>>>> cores_set, unsigned outputLayers,  vector<vector<vector<double>>> biases_set) {
 
 	vector<vector<vector<double>>> layer;
@@ -347,14 +347,14 @@ vector<vector<vector<double>>> Dense(vector<vector<vector<double>>> input, vecto
 			new_matrix = getProcessedMatrix(input, core);
 		}
 
-		// ??????????? ? ???? ????????
+		// Добавление в слой выхода
 		layer.push_back(new_matrix);
 	}
 
 	return layer;
 }
 
-// ???????????? ????? ??????????
+// Генерация ядра свёртки
 vector<vector<vector<double>>> generationCore(unsigned DEPTH, unsigned CORE_SIZE) {
 	vector<vector<vector<double>>> core;
 
@@ -374,7 +374,7 @@ vector<vector<vector<double>>> generationCore(unsigned DEPTH, unsigned CORE_SIZE
 	return core;
 }
 
-// ???????????? ?????????
+// Генерация смещения
 vector<vector<double>> generationBias(int a, int b, double koef) {
 	vector<vector<double>> bias;
 
@@ -389,7 +389,7 @@ vector<vector<double>> generationBias(int a, int b, double koef) {
 	return bias;
 }
 
-// ???????????? ????? ??? ????????????? ????
+// Генерация весов для полносвязного слои
 vector<double> generationWeights(int a) {
 	return generationBias(1, a, 1)[0];
 }
