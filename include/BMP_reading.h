@@ -205,7 +205,7 @@ namespace BMP {
             if (X_SIZE > x && Y_SIZE > y)
                 return this->image[y][x];
             else
-                return NULL;
+                return 0.0;
         }
 
         double** getPixelTable() {
